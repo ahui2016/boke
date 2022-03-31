@@ -9,6 +9,10 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Slot
 
+# https://doc.qt.io/qtforpython/overviews/qtwidgets-widgets-windowflags-example.html
+# from PySide6.QtCore import Qt
+# self.setWindowFlag(Qt.WindowContextHelpButtonHint, True)
+
 
 class Form(QDialog):
     def __init__(self, parent=None):
