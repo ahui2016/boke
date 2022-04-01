@@ -3,6 +3,8 @@ from typing import Final
 Create_tables: Final[
     str
 ] = """
+PRAGMA foreign_keys = ON;
+
 CREATE TABLE IF NOT EXISTS metadata
 (
     name    text   NOT NULL UNIQUE,
@@ -22,7 +24,7 @@ CREATE TABLE IF NOT EXISTS article
     cat_id      REFERENCES category(id) COLLATE NOCASE,
     title       text   NOT NULL UNIQUE COLLATE NOCASE,
     author      text   NOT NULL,
-    published   text   NOT NULL,
+    published   text   NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_article_cat_id ON article(cat_id);
@@ -30,7 +32,7 @@ CREATE INDEX IF NOT EXISTS idx_article_published ON article(published);
 
 CREATE TABLE IF NOT EXISTS tag
 (
-    name   text   PRIMARY KEY COLLATE NOCASE,
+    name   text   PRIMARY KEY COLLATE NOCASE
 );
 
 CREATE TABLE IF NOT EXISTS tag_article
@@ -44,6 +46,8 @@ CREATE INDEX IF NOT EXISTS idx_tag_article_article ON tag_article(article_id);
 
 """
 
-Insert_metadata: Final[str] = "INSERT INTO metadata (name, value) VALUES (?, ?);"
+Insert_metadata: Final[
+    str
+] = "INSERT INTO metadata (name, value) VALUES (:name, :value);"
 Get_metadata: Final[str] = "SELECT value FROM metadata WHERE name=?;"
 Update_metadata: Final[str] = "UPDATE metadata SET value=:value WHERE name=:name;"

@@ -1,38 +1,51 @@
-from typing import Final, TypedDict
+from dataclasses import dataclass
+from typing import Final
 from random import randrange
 import arrow
 
 
 RFC3339: Final[str] = "YYYY-MM-DDTHH:mm:ssZZ"
+DB_filename: Final[str] = "boke.db"
+Drafts_folder_name: Final[str] = "drafts"
+Posted_folder_name: Final[str] = "posted"
+Output_folder_name: Final[str] = "output"
+Templates_folder_name: Final[str] = "templates"
+Blog_cfg_name: Final[str] = "blog-config"
 
 
-class BlogConfig(TypedDict):
-    name: str
-    author: str
+@dataclass
+class BlogConfig:
+    name: str  # 博客名称
+    author: str  # 默认作者（每篇文章也可独立设定作者）
+    home_recent_max: int = 15  # 首页 "最近更新" 列表中的项目上限
 
 
-class Category(TypedDict):
+@dataclass
+class Category:
     id: str
     name: str
     notes: str
 
+    def __init__(self, id: str, name: str, notes: str):
+        self.id = id if id else rand_id()
+        self.name = name
+        self.notes = notes
 
-class Article(TypedDict):
+
+@dataclass
+class Article:
     id: str
     cat_id: str
     title: str
     author: str
     published: str
 
-
-def new_cat(name: str, notes: str) -> Category:
-    return Category(id=rand_id(), name=name, notes=notes)
-
-
-def new_article(cat_id: str, title: str, author: str) -> Article:
-    return Article(
-        id=date_id(), cat_id=cat_id, title=title, author=author, published=now()
-    )
+    def __init__(self, id: str, cat_id: str, title: str, author: str, published: str):
+        self.id = id if id else date_id()
+        self.cat_id = cat_id
+        self.title = title
+        self.author = author
+        self.published = published if published else now()
 
 
 def now() -> str:
