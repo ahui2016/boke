@@ -12,8 +12,23 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 def check_init(ctx: click.Context) -> None:
     if not db.db_path.exists():
-        click.echo("请先使用 'boke init' 命令进行初始化")
+        click.echo("请先进入已初始化的文件夹，或使用 'boke init' 命令进行初始化")
         ctx.exit()
+
+def show_info(ctx: click.Context, _, value):
+    if not value or ctx.resilient_parsing:
+        return
+    check_init(ctx)
+
+    print(f"\n           [boke] {__file__}"\
+        f"\n        [version] {__version__}")
+
+    with db.connect() as conn:
+        util.show_cfg(conn)
+
+    print("           [repo] https://github.com/ahui2016/boke")
+    print()
+    ctx.exit()
 
 
 @click.group(invoke_without_command=True)
@@ -25,6 +40,14 @@ def check_init(ctx: click.Context) -> None:
     "--version",
     package_name=__package_name__,
     message="%(prog)s version: %(version)s",
+)
+@click.option(
+    "-i",
+    "--info",
+    is_flag=True,
+    help="Show informations about config and more.",
+    expose_value=False,
+    callback=show_info,
 )
 @click.pass_context
 def cli(ctx: click.Context):
@@ -56,4 +79,4 @@ def init_command():
 def haha(ctx: click.Context):
     """Try GUI"""
     check_init(ctx)
-    gui.hello()
+    gui.InitBlogForm.show()
