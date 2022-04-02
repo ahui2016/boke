@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS metadata
 
 CREATE TABLE IF NOT EXISTS category
 (
-    id      text   PRIMARY KEY COLLATE NOCASE, 
+    id      text   PRIMARY KEY COLLATE NOCASE,
     name    text   NOT NULL UNIQUE COLLATE NOCASE,
     notes   text   NOT NULL
 );

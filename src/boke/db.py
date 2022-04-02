@@ -1,6 +1,5 @@
 from dataclasses import asdict
 import json
-import os
 from pathlib import Path
 from typing import Any, Iterable
 from result import Err, Ok, Result

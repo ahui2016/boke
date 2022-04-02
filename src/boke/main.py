@@ -15,13 +15,13 @@ def check_init(ctx: click.Context) -> None:
         click.echo("请先进入已初始化的文件夹，或使用 'boke init' 命令进行初始化")
         ctx.exit()
 
+
 def show_info(ctx: click.Context, _, value):
     if not value or ctx.resilient_parsing:
         return
     check_init(ctx)
 
-    print(f"\n           [boke] {__file__}"\
-        f"\n        [version] {__version__}")
+    print(f"\n           [boke] {__file__}" f"\n        [version] {__version__}")
 
     with db.connect() as conn:
         util.show_cfg(conn)
