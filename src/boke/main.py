@@ -71,7 +71,7 @@ def init_command():
 
     初始化博客。请在一个空文件夹内执行 'boke init'。
     """
-    util.init_blog("", "")
+    gui.InitBlogForm.show()
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
@@ -79,4 +79,3 @@ def init_command():
 def haha(ctx: click.Context):
     """Try GUI"""
     check_init(ctx)
-    gui.InitBlogForm.show()
