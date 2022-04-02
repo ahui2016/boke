@@ -1,8 +1,6 @@
 from typing import Final
 
-Create_tables: Final[
-    str
-] = """
+Create_tables: Final = """
 PRAGMA foreign_keys = ON;
 
 CREATE TABLE IF NOT EXISTS metadata
@@ -46,8 +44,6 @@ CREATE INDEX IF NOT EXISTS idx_tag_article_article ON tag_article(article_id);
 
 """
 
-Insert_metadata: Final[
-    str
-] = "INSERT INTO metadata (name, value) VALUES (:name, :value);"
-Get_metadata: Final[str] = "SELECT value FROM metadata WHERE name=?;"
-Update_metadata: Final[str] = "UPDATE metadata SET value=:value WHERE name=:name;"
+Insert_metadata: Final = "INSERT INTO metadata (name, value) VALUES (:name, :value);"
+Get_metadata: Final = "SELECT value FROM metadata WHERE name=?;"
+Update_metadata: Final = "UPDATE metadata SET value=:value WHERE name=:name;"

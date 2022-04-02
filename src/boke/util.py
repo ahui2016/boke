@@ -1,5 +1,6 @@
 import os
 import sqlite3
+from result import Err, Ok, Result
 from . import stmt
 from . import model
 from . import db
@@ -9,7 +10,7 @@ Conn = sqlite3.Connection
 BlogConfig = model.BlogConfig
 
 
-def show_cfg(conn: Conn, cfg: BlogConfig|None = None) -> None:
+def show_cfg(conn: Conn, cfg: BlogConfig | None = None) -> None:
     if not cfg:
         cfg = db.get_cfg(conn).unwrap()
     print(
@@ -21,7 +22,7 @@ def show_cfg(conn: Conn, cfg: BlogConfig|None = None) -> None:
     print()
 
 
-def update_blog_info(conn:Conn, blog_name:str, author:str) -> None:
+def update_blog_info(conn: Conn, blog_name: str, author: str) -> None:
     cfg = db.get_cfg(conn).unwrap()
     cfg.name = blog_name
     cfg.author = author
@@ -45,10 +46,7 @@ def init_blog(blog_name: str, author: str) -> None:
         print(f"\nError. Folder Not Empty: {db.cwd}")
         has_err = True
     if has_err:
-        print(
-            f"\n[Blog's name] {blog_name}"
-            f"\n     [Author] {author}"
-        )
+        print(f"\n[Blog's name] {blog_name}" f"\n     [Author] {author}")
         print(f"\nboke init: Failed.")
         print()
         return
@@ -62,3 +60,19 @@ def init_blog(blog_name: str, author: str) -> None:
         conn.executescript(stmt.Create_tables)
         db.init_cfg(conn, BlogConfig(blog_name, author))
         show_cfg(conn)
+
+
+def get_first_line(filename:str) -> Result[str,str]:
+    with open(filename, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                return Ok(line)
+    return Err(f"Cannot get title from {filename}")
+
+def get_md_file_title(filename:str) -> Result[str,str]:
+    match get_first_line(filename):
+        case Err(e):
+            return Err(e)
+        case Ok(first_line):
+            return model.get_md_title(first_line, model.ArticleTitleLimit)

@@ -1,4 +1,5 @@
 import click
+from result import Err, Ok
 from . import db
 from . import util
 from . import gui
@@ -71,11 +72,18 @@ def init_command():
 
     初始化博客。请在一个空文件夹内执行 'boke init'。
     """
-    gui.InitBlogForm.show()
+    gui.InitBlogForm.exec()
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
+@click.argument("filename", nargs=1, type=click.Path(exists=True))
 @click.pass_context
-def haha(ctx: click.Context):
+def haha(ctx: click.Context, filename:str):
     """Try GUI"""
     check_init(ctx)
+
+    match util.get_md_file_title(filename):
+        case Err(e):
+            print(e)
+        case Ok(title):
+            gui.PostForm.exec(filename, title)
