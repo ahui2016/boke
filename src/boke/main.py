@@ -67,11 +67,16 @@ def cli(ctx: click.Context):
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS, name="init")
-def init_command():
+@click.pass_context
+def init_command(ctx: click.Context):
     """Initialize your blog.
 
     初始化博客。请在一个空文件夹内执行 'boke init'。
     """
+    if util.dir_not_empty():
+        print(f"Error. Folder Not Empty: {db.cwd}")
+        ctx.exit()
+
     gui.InitBlogForm.exec()
 
 

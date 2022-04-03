@@ -3,6 +3,8 @@ from typing import Final
 from PySide6 import QtWidgets
 from PySide6.QtCore import Qt
 from result import Err, Ok, Result
+from . import model
+from . import db
 from . import util
 
 # https://doc.qt.io/qtforpython/overviews/qtwidgets-widgets-windowflags-example.html
@@ -76,7 +78,14 @@ class InitBlogForm():
 
 class PostForm():
     @classmethod
+    def connect_db(cls) -> None:
+        with db.connect() as conn:
+            cls.blog_cfg = db.get_cfg(conn).unwrap()
+
+    @classmethod
     def init(cls, filename:str, title:str) -> None:
+        cls.connect_db()
+
         cls.form = QtWidgets.QDialog()
         cls.form.setWindowTitle("boke post")
         cls.form.setStyleSheet(FormStyle)
@@ -87,27 +96,51 @@ class PostForm():
         grid = QtWidgets.QGridLayout()
         vbox.addLayout(grid)
 
+        row = 0
+        tips = "自动分配随机ID, 可修改"
+        id_label = QtWidgets.QLabel("ID")
+        cls.id_input = QtWidgets.QLineEdit()
+        cls.id_input.setText(model.date_id())
+        id_label.setBuddy(cls.id_input)
+        id_label.setToolTip(tips)
+        cls.id_input.setToolTip(tips)
+        grid.addWidget(id_label, row, 0)
+        grid.addWidget(cls.id_input, row, 1)
+
+        row += 1
+        tips = "要发表的文件，由 'boke post' 命令指定"
         file_label = QtWidgets.QLabel("File")
         file_input = QtWidgets.QLineEdit()
         file_input.setText(filename)
         file_input.setReadOnly(True)
         file_label.setBuddy(file_input)
-        grid.addWidget(file_label, 0, 0)
-        grid.addWidget(file_input, 0, 1)
+        file_label.setToolTip(tips)
+        file_input.setToolTip(tips)
+        grid.addWidget(file_label, row, 0)
+        grid.addWidget(file_input, row, 1)
 
+        row += 1
+        tips = "自动获取第一句作为标题"
         title_label = QtWidgets.QLabel("Title")
         title_input = QtWidgets.QLineEdit()
         title_input.setText(title)
         title_input.setReadOnly(True)
         title_label.setBuddy(title_input)
-        grid.addWidget(title_label, 1, 0)
-        grid.addWidget(title_input, 1, 1)
+        title_label.setToolTip(tips)
+        title_input.setToolTip(tips)
+        grid.addWidget(title_label, row, 0)
+        grid.addWidget(title_input, row, 1)
 
+        row += 1
+        tips = "自动获取默认作者，可修改"
         author_label = QtWidgets.QLabel("Author")
         cls.author_input = QtWidgets.QLineEdit()
+        cls.author_input.setText(cls.blog_cfg.author)
         author_label.setBuddy(cls.author_input)
-        grid.addWidget(author_label, 2, 0)
-        grid.addWidget(cls.author_input, 2, 1)
+        author_label.setToolTip(tips)
+        cls.author_input.setToolTip(tips)
+        grid.addWidget(author_label, row, 0)
+        grid.addWidget(cls.author_input, row, 1)
 
         cls.buttonBox = QtWidgets.QDialogButtonBox(
             QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel,  # type: ignore

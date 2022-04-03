@@ -63,7 +63,7 @@ def base_repr(number: int, base: int = 10, padding: int = 0) -> str:
     """
     Return a string representation of a number in the given base system.
     """
-    digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    digits = "0123456789abcdefghijklmnopqrstuvwxyz"
     if base > len(digits):
         raise ValueError("Bases greater than 36 not handled in base_repr.")
     elif base < 2:
