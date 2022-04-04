@@ -14,7 +14,7 @@ Output_folder_name: Final[str] = "output"
 Templates_folder_name: Final[str] = "templates"
 Blog_cfg_name: Final[str] = "blog-config"
 
-ArticleTitleLimit: Final = 256 # 文章标题长度上限
+ArticleTitleLimit: Final = 192 # 文章标题长度上限
 Article_ID_Limit: Final = 64 # 文章 ID 长度上限（该 ID 同时也是文件名）
 
 MD_TitlePattern: Final = re.compile(r"^(#{1,6}|>|1.|-|\*) (.+)")

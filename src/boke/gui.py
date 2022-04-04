@@ -1,7 +1,7 @@
 import sys
 from typing import Final
 from PySide6 import QtWidgets
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from result import Err, Ok, Result
 from . import model
 from . import db
@@ -22,6 +22,17 @@ QPushButton {
     padding: 5px 10px 5px 10px;
 }
 """
+
+
+class ReadonlyLineEdit(QtWidgets.QLineEdit):
+    clicked = Signal(tuple)
+
+    def __init__(self, name:str):
+        super().__init__()
+        self.name = name
+
+    def mousePressEvent(self, event):
+        self.clicked.emit((self.name, self.text()))
 
 
 # 这里 class 只是用来作为 namespace.
@@ -108,11 +119,13 @@ class PostForm():
         grid.addWidget(cls.id_input, row, 1)
 
         row += 1
+        item_name = "File"
         tips = "要发表的文件，由 'boke post' 命令指定"
-        file_label = QtWidgets.QLabel("File")
-        file_input = QtWidgets.QLineEdit()
+        file_label = QtWidgets.QLabel(item_name)
+        file_input = ReadonlyLineEdit(item_name)
         file_input.setText(filename)
         file_input.setReadOnly(True)
+        file_input.clicked.connect(cls.click_readonly)
         file_label.setBuddy(file_input)
         file_label.setToolTip(tips)
         file_input.setToolTip(tips)
@@ -121,10 +134,12 @@ class PostForm():
 
         row += 1
         tips = "自动获取第一句作为标题"
-        title_label = QtWidgets.QLabel("Title")
-        title_input = QtWidgets.QLineEdit()
+        item_name = "Title"
+        title_label = QtWidgets.QLabel(item_name)
+        title_input = ReadonlyLineEdit(item_name)
         title_input.setText(title)
         title_input.setReadOnly(True)
+        title_input.clicked.connect(cls.click_readonly)
         title_label.setBuddy(title_input)
         title_label.setToolTip(tips)
         title_input.setToolTip(tips)
@@ -142,6 +157,19 @@ class PostForm():
         grid.addWidget(author_label, row, 0)
         grid.addWidget(cls.author_input, row, 1)
 
+        row += 1
+        tips = "文章的类别"
+        cat_label = QtWidgets.QLabel("Category")
+        cls.cat_input = QtWidgets.QComboBox()
+        cls.cat_input.addItems(["", "abc", "1234", "cdefg", "新建"])
+        cls.cat_input.insertSeparator(4)
+        cls.cat_input.textActivated.connect(cls.select_cat) # type: ignore
+        cat_label.setBuddy(cls.cat_input)
+        cat_label.setToolTip(tips)
+        cls.cat_input.setToolTip(tips)
+        grid.addWidget(cat_label, row, 0)
+        grid.addWidget(cls.cat_input, row, 1)
+
         cls.buttonBox = QtWidgets.QDialogButtonBox(
             QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel,  # type: ignore
             orientation=Qt.Horizontal,
@@ -150,7 +178,20 @@ class PostForm():
         # cls.buttonBox.accepted.connect(cls.accept)  # type: ignore
         vbox.addWidget(cls.buttonBox)
 
-        cls.form.resize(500, cls.form.sizeHint().height())
+        cls.form.resize(640, cls.form.sizeHint().height())
+
+    @classmethod
+    def click_readonly(cls, args:tuple[str,str]) -> None:
+        msgBox = QtWidgets.QMessageBox()
+        msgBox.setIcon(QtWidgets.QMessageBox.Icon.Information)
+        padding = "                                           "
+        msgBox.setWindowTitle(args[0]+padding)
+        msgBox.setText(args[1])
+        msgBox.exec()
+
+    @classmethod
+    def select_cat(cls, cat: str) -> None:
+        print(cat)
 
     @classmethod
     def exec(cls, filename:str, title:str) -> None:
