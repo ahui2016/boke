@@ -2,6 +2,7 @@ import sys
 from typing import Final
 from PySide6 import QtWidgets
 from PySide6.QtCore import Qt, Signal
+import arrow
 from result import Err, Ok, Result
 from . import model
 from . import db
@@ -109,7 +110,7 @@ class PostForm():
 
         row = 0
         tips = "自动分配随机ID, 可修改"
-        id_label = QtWidgets.QLabel("ID")
+        id_label = QtWidgets.QLabel("&ID")
         cls.id_input = QtWidgets.QLineEdit()
         cls.id_input.setText(model.date_id())
         id_label.setBuddy(cls.id_input)
@@ -148,7 +149,7 @@ class PostForm():
 
         row += 1
         tips = "自动获取默认作者，可修改"
-        author_label = QtWidgets.QLabel("Author")
+        author_label = QtWidgets.QLabel("&Author")
         cls.author_input = QtWidgets.QLineEdit()
         cls.author_input.setText(cls.blog_cfg.author)
         author_label.setBuddy(cls.author_input)
@@ -163,7 +164,7 @@ class PostForm():
         cls.cat_index: int|None = None
         cls.cat_list = QtWidgets.QComboBox()
         cls.cat_list.setPlaceholderText(" ")
-        cls.cat_list.addItems(["abc", "1234", "cdefg", "新建"])
+        cls.cat_list.addItems(["abc", "1234", "cdefg", "新建 (New category)"])
         cls.cat_list.insertSeparator(3)
         cls.cat_list.textActivated.connect(cls.select_cat) # type: ignore
         cat_label.setBuddy(cls.cat_list)
@@ -172,12 +173,23 @@ class PostForm():
         grid.addWidget(cat_label, row, 0)
         grid.addWidget(cls.cat_list, row, 1)
 
+        row += 1
+        tips = "发布日期，可修改（必须符合格式）"
+        date_label = QtWidgets.QLabel("&Datetime")
+        cls.date_input = QtWidgets.QLineEdit()
+        cls.date_input.setText(model.now())
+        date_label.setBuddy(cls.date_input)
+        date_label.setToolTip(tips)
+        cls.date_input.setToolTip(tips)
+        grid.addWidget(date_label, row, 0)
+        grid.addWidget(cls.date_input, row, 1)
+
         cls.buttonBox = QtWidgets.QDialogButtonBox(
             QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel,  # type: ignore
             orientation=Qt.Horizontal,
         )
         cls.buttonBox.rejected.connect(cls.form.reject)  # type: ignore
-        # cls.buttonBox.accepted.connect(cls.accept)  # type: ignore
+        cls.buttonBox.accepted.connect(cls.accept)  # type: ignore
         vbox.addWidget(cls.buttonBox)
 
         cls.form.resize(640, cls.form.sizeHint().height())
@@ -187,8 +199,8 @@ class PostForm():
         msgBox = QtWidgets.QMessageBox()
         msgBox.setIcon(QtWidgets.QMessageBox.Icon.Information)
         padding = "                                           "
-        msgBox.setWindowTitle(args[0]+padding)
-        msgBox.setText(args[1])
+        msgBox.setWindowTitle(args[0])
+        msgBox.setText(args[1]+padding)
         msgBox.exec()
 
     @classmethod
@@ -215,6 +227,22 @@ class PostForm():
             cls.cat_list.setCurrentIndex(cls.cat_index)
         else:
             cls.cat_list.setCurrentText("")
+
+    @classmethod
+    def accept(cls) -> None:
+        published = cls.date_input.text().strip()
+        try:
+            _ = arrow.get(published, model.RFC3339)
+        except Exception as e:
+            msgBox = QtWidgets.QMessageBox()
+            msgBox.setIcon(QtWidgets.QMessageBox.Icon.Critical)
+            msgBox.setWindowTitle("Datetime Error")
+            msgBox.setText(str(e))
+            msgBox.exec()
+            return
+
+        author = cls.author_input.text().strip()
+        cls.form.close()
 
     @classmethod
     def exec(cls, filename:str, title:str) -> None:
