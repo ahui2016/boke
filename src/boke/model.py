@@ -14,10 +14,11 @@ Output_folder_name: Final[str] = "output"
 Templates_folder_name: Final[str] = "templates"
 Blog_cfg_name: Final[str] = "blog-config"
 
-ArticleTitleLimit: Final = 192 # 文章标题长度上限
-Article_ID_Limit: Final = 64 # 文章 ID 长度上限（该 ID 同时也是文件名）
+ArticleTitleLimit: Final = 192  # 文章标题长度上限
+Article_ID_Limit: Final = 64  # 文章 ID 长度上限（该 ID 同时也是文件名）
 
 MD_TitlePattern: Final = re.compile(r"^(#{1,6}|>|1.|-|\*) (.+)")
+
 
 @dataclass
 class BlogConfig:
@@ -116,7 +117,8 @@ def utf8_byte_truncate(text: str, max_bytes: int) -> str:
         i -= 1
     return utf8[:i].decode("utf8")
 
-def get_md_title(md_first_line:str, max_bytes:int) -> Result[str, str]:
+
+def get_md_title(md_first_line: str, max_bytes: int) -> Result[str, str]:
     """md_first_line 应已去除首尾空白字符。"""
     md_title = MD_TitlePattern.findall(md_first_line)
     if not md_title:
@@ -124,10 +126,9 @@ def get_md_title(md_first_line:str, max_bytes:int) -> Result[str, str]:
     else:
         # 此时 md_title 大概像这样: [('#', ' abcd')]
         title = md_title[0][1].strip()
-    
+
     truncated = utf8_byte_truncate(title, max_bytes).strip()
     if not truncated:
-        return Err(f"Cannot get title. (无法获取标题)\n"
-            "请修改文章的标题(文件内容的第一行)")
+        return Err("Cannot get title. (无法获取标题)\n请修改文章的标题(文件内容的第一行)")
     else:
         return Ok(truncated)

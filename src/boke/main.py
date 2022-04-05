@@ -83,7 +83,7 @@ def init_command(ctx: click.Context):
 @cli.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("filename", nargs=1, type=click.Path(exists=True))
 @click.pass_context
-def haha(ctx: click.Context, filename:str):
+def haha(ctx: click.Context, filename: str):
     """Try GUI"""
     check_init(ctx)
 

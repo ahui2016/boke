@@ -12,6 +12,8 @@ from . import util
 # from PySide6.QtCore import Qt
 # self.setWindowFlag(Qt.WindowContextHelpButtonHint, True)
 
+Icon: Final = QtWidgets.QMessageBox.Icon
+ButtonBox: Final = QtWidgets.QDialogButtonBox
 
 FormStyle: Final = """
 QWidget {
@@ -24,11 +26,13 @@ QPushButton {
 }
 """
 
+NewCategory: Final = "新建 (New category)"
+
 
 class ReadonlyLineEdit(QtWidgets.QLineEdit):
     clicked = Signal(tuple)
 
-    def __init__(self, name:str):
+    def __init__(self, name: str):
         super().__init__()
         self.name = name
 
@@ -37,7 +41,7 @@ class ReadonlyLineEdit(QtWidgets.QLineEdit):
 
 
 # 这里 class 只是用来作为 namespace.
-class InitBlogForm():
+class InitBlogForm:
     @classmethod
     def init(cls) -> None:
         cls.form = QtWidgets.QDialog()
@@ -63,8 +67,8 @@ class InitBlogForm():
         grid.addWidget(author_label, 1, 0)
         grid.addWidget(cls.author_input, 1, 1)
 
-        cls.buttonBox = QtWidgets.QDialogButtonBox(
-            QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel,  # type: ignore
+        cls.buttonBox = ButtonBox(
+            ButtonBox.Ok | ButtonBox.Cancel,  # type: ignore
             orientation=Qt.Horizontal,
         )
         cls.buttonBox.rejected.connect(cls.form.reject)  # type: ignore
@@ -88,14 +92,15 @@ class InitBlogForm():
         cls.form.show()
         app.exec()
 
-class PostForm():
+
+class PostForm:
     @classmethod
     def connect_db(cls) -> None:
         with db.connect() as conn:
             cls.blog_cfg = db.get_cfg(conn).unwrap()
 
     @classmethod
-    def init(cls, filename:str, title:str) -> None:
+    def init(cls, filename: str, title: str) -> None:
         cls.connect_db()
 
         cls.form = QtWidgets.QDialog()
@@ -139,6 +144,7 @@ class PostForm():
         title_label = QtWidgets.QLabel(item_name)
         title_input = ReadonlyLineEdit(item_name)
         title_input.setText(title)
+        title_input.cursorBackward(False, len(title))
         title_input.setReadOnly(True)
         title_input.clicked.connect(cls.click_readonly)
         title_label.setBuddy(title_input)
@@ -161,12 +167,12 @@ class PostForm():
         row += 1
         tips = "文章的类别, 必选"
         cat_label = QtWidgets.QLabel("Category")
-        cls.cat_index: int|None = None
+        cls.cat_index: int | None = None
         cls.cat_list = QtWidgets.QComboBox()
         cls.cat_list.setPlaceholderText(" ")
-        cls.cat_list.addItems(["abc", "1234", "cdefg", "新建 (New category)"])
+        cls.cat_list.addItems(["abc", "1234", "cdefg", NewCategory])
         cls.cat_list.insertSeparator(3)
-        cls.cat_list.textActivated.connect(cls.select_cat) # type: ignore
+        cls.cat_list.textActivated.connect(cls.select_cat)  # type: ignore
         cat_label.setBuddy(cls.cat_list)
         cat_label.setToolTip(tips)
         cls.cat_list.setToolTip(tips)
@@ -184,8 +190,8 @@ class PostForm():
         grid.addWidget(date_label, row, 0)
         grid.addWidget(cls.date_input, row, 1)
 
-        cls.buttonBox = QtWidgets.QDialogButtonBox(
-            QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel,  # type: ignore
+        cls.buttonBox = ButtonBox(
+            ButtonBox.Ok | ButtonBox.Cancel,  # type: ignore
             orientation=Qt.Horizontal,
         )
         cls.buttonBox.rejected.connect(cls.form.reject)  # type: ignore
@@ -195,17 +201,13 @@ class PostForm():
         cls.form.resize(640, cls.form.sizeHint().height())
 
     @classmethod
-    def click_readonly(cls, args:tuple[str,str]) -> None:
-        msgBox = QtWidgets.QMessageBox()
-        msgBox.setIcon(QtWidgets.QMessageBox.Icon.Information)
-        padding = "                                           "
-        msgBox.setWindowTitle(args[0])
-        msgBox.setText(args[1]+padding)
-        msgBox.exec()
+    def click_readonly(cls, args: tuple[str, str]) -> None:
+        padding = "                                       "
+        msg_box_show(args[0], args[1] + padding, Icon.Information)
 
     @classmethod
     def select_cat(cls, cat: str) -> None:
-        if cat != "新建":
+        if cat != NewCategory:
             cls.cat_index = cls.cat_list.currentIndex()
             print(cat)
             return
@@ -213,10 +215,7 @@ class PostForm():
         if cls.cat_index is not None:
             cls.cat_list.setCurrentIndex(cls.cat_index)
         text, ok = QtWidgets.QInputDialog.getText(
-            cls.form,
-            "New Category",
-            "新类别：",
-            QtWidgets.QLineEdit.Normal
+            cls.form, "New Category", "新类别：", QtWidgets.QLineEdit.Normal
         )
         cat = text.strip()
         if ok and cat:
@@ -230,28 +229,40 @@ class PostForm():
 
     @classmethod
     def accept(cls) -> None:
+        # 检查文章类型
+        cat = cls.cat_list.currentText().strip()
+        if not cat:
+            msg_box_show("category Error", "Category is empty (请选择文章类别)", Icon.Critical)
+            return
+
+        # 检查发布时间
         published = cls.date_input.text().strip()
         try:
             _ = arrow.get(published, model.RFC3339)
         except Exception as e:
-            msgBox = QtWidgets.QMessageBox()
-            msgBox.setIcon(QtWidgets.QMessageBox.Icon.Critical)
-            msgBox.setWindowTitle("Datetime Error")
-            msgBox.setText(str(e))
-            msgBox.exec()
+            msg_box_show("Datetime Error", str(e), Icon.Critical)
             return
 
         author = cls.author_input.text().strip()
         cls.form.close()
 
     @classmethod
-    def exec(cls, filename:str, title:str) -> None:
+    def exec(cls, filename: str, title: str) -> None:
         app = QtWidgets.QApplication(sys.argv)
         cls.init(filename, title)
         cls.form.show()
         app.exec()
 
+
 def label_center(text: str) -> QtWidgets.QLabel:
     label = QtWidgets.QLabel(text)
     label.setAlignment(Qt.AlignCenter)  # type: ignore
     return label
+
+
+def msg_box_show(title: str, text: str, icon: Icon = Icon.NoIcon) -> None:
+    msgBox = QtWidgets.QMessageBox()
+    msgBox.setIcon(icon)
+    msgBox.setWindowTitle(title)
+    msgBox.setText(text)
+    msgBox.exec()

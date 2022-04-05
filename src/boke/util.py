@@ -62,7 +62,7 @@ def init_blog(blog_name: str, author: str) -> None:
         show_cfg(conn)
 
 
-def get_first_line(filename:str) -> Result[str,str]:
+def get_first_line(filename: str) -> Result[str, str]:
     with open(filename, "r", encoding="utf-8") as f:
         for line in f:
             line = line.strip()
@@ -70,7 +70,8 @@ def get_first_line(filename:str) -> Result[str,str]:
                 return Ok(line)
     return Err(f"Cannot get title from {filename}")
 
-def get_md_file_title(filename:str) -> Result[str,str]:
+
+def get_md_file_title(filename: str) -> Result[str, str]:
     match get_first_line(filename):
         case Err(e):
             return Err(e)
