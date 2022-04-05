@@ -158,17 +158,19 @@ class PostForm():
         grid.addWidget(cls.author_input, row, 1)
 
         row += 1
-        tips = "文章的类别"
+        tips = "文章的类别, 必选"
         cat_label = QtWidgets.QLabel("Category")
-        cls.cat_input = QtWidgets.QComboBox()
-        cls.cat_input.addItems(["", "abc", "1234", "cdefg", "新建"])
-        cls.cat_input.insertSeparator(4)
-        cls.cat_input.textActivated.connect(cls.select_cat) # type: ignore
-        cat_label.setBuddy(cls.cat_input)
+        cls.cat_index: int|None = None
+        cls.cat_list = QtWidgets.QComboBox()
+        cls.cat_list.setPlaceholderText(" ")
+        cls.cat_list.addItems(["abc", "1234", "cdefg", "新建"])
+        cls.cat_list.insertSeparator(3)
+        cls.cat_list.textActivated.connect(cls.select_cat) # type: ignore
+        cat_label.setBuddy(cls.cat_list)
         cat_label.setToolTip(tips)
-        cls.cat_input.setToolTip(tips)
+        cls.cat_list.setToolTip(tips)
         grid.addWidget(cat_label, row, 0)
-        grid.addWidget(cls.cat_input, row, 1)
+        grid.addWidget(cls.cat_list, row, 1)
 
         cls.buttonBox = QtWidgets.QDialogButtonBox(
             QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel,  # type: ignore
@@ -191,7 +193,28 @@ class PostForm():
 
     @classmethod
     def select_cat(cls, cat: str) -> None:
-        print(cat)
+        if cat != "新建":
+            cls.cat_index = cls.cat_list.currentIndex()
+            print(cat)
+            return
+
+        if cls.cat_index is not None:
+            cls.cat_list.setCurrentIndex(cls.cat_index)
+        text, ok = QtWidgets.QInputDialog.getText(
+            cls.form,
+            "New Category",
+            "新类别：",
+            QtWidgets.QLineEdit.Normal
+        )
+        cat = text.strip()
+        if ok and cat:
+            cls.cat_list.insertItem(0, cat)
+            cls.cat_list.setCurrentIndex(0)
+            cls.cat_index = 0
+        elif cls.cat_index is not None:
+            cls.cat_list.setCurrentIndex(cls.cat_index)
+        else:
+            cls.cat_list.setCurrentText("")
 
     @classmethod
     def exec(cls, filename:str, title:str) -> None:
