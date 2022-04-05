@@ -47,3 +47,11 @@ CREATE INDEX IF NOT EXISTS idx_tag_article_article ON tag_article(article_id);
 Insert_metadata: Final = "INSERT INTO metadata (name, value) VALUES (:name, :value);"
 Get_metadata: Final = "SELECT value FROM metadata WHERE name=?;"
 Update_metadata: Final = "UPDATE metadata SET value=:value WHERE name=:name;"
+
+Get_all_cat: Final = """
+    SELECT name FROM category
+    """
+
+Insert_cat: Final = """
+    INSERT INTO category (id, name, notes) VALUES (:id, :name, :notes)
+    """

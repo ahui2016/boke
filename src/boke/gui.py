@@ -1,5 +1,5 @@
 import sys
-from typing import Final
+from typing import Final, cast
 from PySide6 import QtWidgets
 from PySide6.QtCore import Qt, Signal
 import arrow
@@ -95,13 +95,14 @@ class InitBlogForm:
 
 class PostForm:
     @classmethod
-    def connect_db(cls) -> None:
+    def get_db_data(cls) -> None:
         with db.connect() as conn:
-            cls.blog_cfg = db.get_cfg(conn).unwrap()
+            cls.blog_cfg: model.BlogConfig = db.get_cfg(conn).unwrap()
+            cls.cats: list[str] = db.get_all_cat(conn)
 
     @classmethod
     def init(cls, filename: str, title: str) -> None:
-        cls.connect_db()
+        cls.get_db_data()
 
         cls.form = QtWidgets.QDialog()
         cls.form.setWindowTitle("boke post")
@@ -170,8 +171,8 @@ class PostForm:
         cls.cat_index: int | None = None
         cls.cat_list = QtWidgets.QComboBox()
         cls.cat_list.setPlaceholderText(" ")
-        cls.cat_list.addItems(["abc", "1234", "cdefg", NewCategory])
-        cls.cat_list.insertSeparator(3)
+        cls.cat_list.addItems(cls.cats + [NewCategory])
+        cls.cat_list.insertSeparator(len(cls.cats))
         cls.cat_list.textActivated.connect(cls.select_cat)  # type: ignore
         cat_label.setBuddy(cls.cat_list)
         cat_label.setToolTip(tips)
@@ -209,23 +210,34 @@ class PostForm:
     def select_cat(cls, cat: str) -> None:
         if cat != NewCategory:
             cls.cat_index = cls.cat_list.currentIndex()
-            print(cat)
             return
 
-        if cls.cat_index is not None:
-            cls.cat_list.setCurrentIndex(cls.cat_index)
+        cls.reset_cat_list()
         text, ok = QtWidgets.QInputDialog.getText(
             cls.form, "New Category", "新类别：", QtWidgets.QLineEdit.Normal
         )
         cat = text.strip()
         if ok and cat:
-            cls.cat_list.insertItem(0, cat)
-            cls.cat_list.setCurrentIndex(0)
-            cls.cat_index = 0
-        elif cls.cat_index is not None:
+            cls.insert_cat(cat)
+
+    @classmethod
+    def reset_cat_list(cls) -> None:
+        if cls.cat_index is not None:
             cls.cat_list.setCurrentIndex(cls.cat_index)
         else:
             cls.cat_list.setCurrentText("")
+
+    @classmethod
+    def insert_cat(cls, cat:str) -> None:
+        r = db.execute(db.insert_cat, cat)
+        err = cast(Result[str,str], r).err()
+        if err:
+            msg_box_show("Category Error", err, Icon.Critical)
+            return
+
+        cls.cat_list.insertItem(0, cat)
+        cls.cat_list.setCurrentIndex(0)
+        cls.cat_index = 0
 
     @classmethod
     def accept(cls) -> None:
