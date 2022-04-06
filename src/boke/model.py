@@ -132,3 +132,12 @@ def get_md_title(md_first_line: str, max_bytes: int) -> Result[str, str]:
         return Err("Cannot get title. (无法获取标题)\n请修改文章的标题(文件内容的第一行)")
     else:
         return Ok(truncated)
+
+
+def unique_str_list(str_list: list[str]) -> list[str]:
+    items = []
+    for item in str_list:
+        upper_items = [item.upper() for item in items]
+        if item.upper() not in upper_items:
+            items.append(item)
+    return items

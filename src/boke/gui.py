@@ -1,3 +1,4 @@
+import re
 import sys
 from typing import Final, cast
 from PySide6 import QtWidgets
@@ -5,6 +6,7 @@ from PySide6.QtCore import Qt, Signal
 import arrow
 from result import Err, Ok, Result
 from . import model
+from . import stmt
 from . import db
 from . import util
 
@@ -18,7 +20,7 @@ ButtonBox: Final = QtWidgets.QDialogButtonBox
 FormStyle: Final = """
 QWidget {
     font-size: 18px;
-    margin: 5px 0 5px 0;
+    margin-top: 5px;
 }
 QPushButton {
     font-size: 14px;
@@ -191,6 +193,22 @@ class PostForm:
         grid.addWidget(date_label, row, 0)
         grid.addWidget(cls.date_input, row, 1)
 
+        row += 1
+        tips = "标签，用逗号或空格间隔"
+        tags_label = QtWidgets.QLabel("&Tags")
+        cls.tags_input = QtWidgets.QPlainTextEdit()
+        cls.tags_input.setFixedHeight(70)
+        tags_label.setBuddy(cls.tags_input)
+        tags_label.setToolTip(tips)
+        cls.tags_input.setToolTip(tips)
+        grid.addWidget(tags_label, row, 0, Qt.AlignTop)  # type: ignore
+        grid.addWidget(cls.tags_input, row, 1, 2, 1)
+
+        row += 1
+        cls.tags_preview_btn = QtWidgets.QPushButton('preview')
+        cls.tags_preview_btn.clicked.connect(cls.preview_tags) # type: ignore
+        grid.addWidget(cls.tags_preview_btn, row, 0)
+
         cls.buttonBox = ButtonBox(
             ButtonBox.Ok | ButtonBox.Cancel,  # type: ignore
             orientation=Qt.Horizontal,
@@ -204,7 +222,7 @@ class PostForm:
     @classmethod
     def click_readonly(cls, args: tuple[str, str]) -> None:
         padding = "                                       "
-        msg_box_show(args[0], args[1] + padding, Icon.Information)
+        alert(args[0], args[1] + padding, Icon.Information)
 
     @classmethod
     def select_cat(cls, cat: str) -> None:
@@ -228,11 +246,24 @@ class PostForm:
             cls.cat_list.setCurrentText("")
 
     @classmethod
-    def insert_cat(cls, cat:str) -> None:
+    def preview_tags(cls) -> None:
+        match extract_tags(cls.tags_input.toPlainText()):
+            case Err(e):
+                alert("Tags Error", e, Icon.Critical)
+            case Ok(tags):
+                preview = "  #".join(tags)
+                if preview:
+                    preview = "#"+preview
+                else:
+                    preview = "(Tags: empty) 没有标签"
+                alert("Tags Preview", preview)
+
+    @classmethod
+    def insert_cat(cls, cat: str) -> None:
         r = db.execute(db.insert_cat, cat)
-        err = cast(Result[str,str], r).err()
+        err = cast(Result[str, str], r).err()
         if err:
-            msg_box_show("Category Error", err, Icon.Critical)
+            alert("Category Error", err, Icon.Critical)
             return
 
         cls.cat_list.insertItem(0, cat)
@@ -241,10 +272,19 @@ class PostForm:
 
     @classmethod
     def accept(cls) -> None:
+        # 检查 ID
+        article_id = cls.id_input.text().strip()
+        if not article_id:
+            alert("ID Error", "ID is empty (请填写ID)", Icon.Critical)
+            return
+        elif db.execute(db.is_exist, stmt.Article_id, (article_id,)):
+            alert("ID Error", f"ID exists (ID已存在): {article_id}", Icon.Critical)
+            return
+
         # 检查文章类型
         cat = cls.cat_list.currentText().strip()
         if not cat:
-            msg_box_show("category Error", "Category is empty (请选择文章类别)", Icon.Critical)
+            alert("category Error", "Category is empty (请选择文章类别)", Icon.Critical)
             return
 
         # 检查发布时间
@@ -252,7 +292,7 @@ class PostForm:
         try:
             _ = arrow.get(published, model.RFC3339)
         except Exception as e:
-            msg_box_show("Datetime Error", str(e), Icon.Critical)
+            alert("Datetime Error", str(e), Icon.Critical)
             return
 
         author = cls.author_input.text().strip()
@@ -272,9 +312,24 @@ def label_center(text: str) -> QtWidgets.QLabel:
     return label
 
 
-def msg_box_show(title: str, text: str, icon: Icon = Icon.NoIcon) -> None:
+def alert(title: str, text: str, icon: Icon = Icon.Information) -> None:
     msgBox = QtWidgets.QMessageBox()
     msgBox.setIcon(icon)
     msgBox.setWindowTitle(title)
     msgBox.setText(text)
     msgBox.exec()
+
+
+def extract_tags(s: str) -> Result[list[str], str]:
+    sep_pattern: Final = re.compile(r"[#;,，；\s]")
+    forbid_pattern: Final = re.compile(
+        r"[\`\~\!\@\$\%\^\&\*\(\)\-\=\+\[\]\{\}\\\|\:\'\"\<\>\.\?\/]"
+    )
+
+    matched = forbid_pattern.search(s)
+    if matched is not None:
+        return Err(f"Forbidden character (不可包含): {matched.group(0)}")
+
+    tags = sep_pattern.split(s)
+    not_empty = [tag for tag in tags if tag]
+    return Ok(model.unique_str_list(not_empty))

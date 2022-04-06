@@ -1,7 +1,7 @@
 from dataclasses import asdict
 import json
 from pathlib import Path
-from typing import Any, Callable, Iterable
+from typing import Callable, Iterable
 from result import Err, Ok, Result
 import sqlite3
 from . import stmt
@@ -26,12 +26,14 @@ def connect() -> Conn:
     conn.row_factory = sqlite3.Row
     return conn
 
+
 def execute(func: Callable, *args):
     with connect() as conn:
         return func(conn, *args)
 
+
 def connUpdate(
-    conn: Conn, query: str, param: Iterable[Any], many: bool = False
+    conn: Conn, query: str, param: Iterable, many: bool = False
 ) -> Result[int, str]:
     if many:
         n = conn.executemany(query, param).rowcount
@@ -40,6 +42,10 @@ def connUpdate(
     if n <= 0:
         return Err("sqlite row affected = 0")
     return Ok(n)
+
+
+def is_exist(conn: Conn, query: str, param: Iterable) -> bool:
+    return True if conn.execute(query, param).fetchone()[0] else False
 
 
 def get_cfg(conn: Conn) -> Result[BlogConfig, str]:
@@ -70,13 +76,16 @@ def init_cfg(conn: Conn, cfg: BlogConfig) -> None:
 def get_all_cat(conn: Conn) -> list[str]:
     return [row[0] for row in conn.execute(stmt.Get_all_cat)]
 
-def insert_cat(conn:Conn, name:str,notes:str="", id:str="") -> Result[str,str]:
+
+def insert_cat(
+    conn: Conn, name: str, notes: str = "", id: str = ""
+) -> Result[str, str]:
     cat = model.Category(id, name, notes)
     try:
         conn.execute(stmt.Insert_cat, asdict(cat))
     except Exception as e:
-        if 'UNIQUE constraint failed' in str(e):
-            return Err(f'Category Exists (类别已存在): {cat.name}')
+        if "UNIQUE constraint failed" in str(e):
+            return Err(f"Category Exists (类别已存在): {cat.name}")
         else:
             raise
     return Ok()

@@ -53,5 +53,9 @@ Get_all_cat: Final = """
     """
 
 Insert_cat: Final = """
-    INSERT INTO category (id, name, notes) VALUES (:id, :name, :notes)
+    INSERT INTO category (id, name, notes) VALUES (:id, :name, :notes);
+    """
+
+Article_id = """
+    SELECT count(*) FROM article WHERE id=?;
     """
