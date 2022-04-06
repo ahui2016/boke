@@ -1,4 +1,5 @@
 import os
+import shutil
 import sqlite3
 from result import Err, Ok, Result
 from . import stmt
@@ -62,7 +63,7 @@ def init_blog(blog_name: str, author: str) -> None:
         show_cfg(conn)
 
 
-def get_first_line(filename: str) -> Result[str, str]:
+def get_first_line(filename: os.PathLike) -> Result[str, str]:
     with open(filename, "r", encoding="utf-8") as f:
         for line in f:
             line = line.strip()
@@ -71,9 +72,17 @@ def get_first_line(filename: str) -> Result[str, str]:
     return Err(f"Cannot get title from {filename}")
 
 
-def get_md_file_title(filename: str) -> Result[str, str]:
+def get_md_file_title(filename: os.PathLike) -> Result[str, str]:
     match get_first_line(filename):
         case Err(e):
             return Err(e)
         case Ok(first_line):
             return model.get_md_title(first_line, model.ArticleTitleLimit)
+
+
+def post_article(src_file:os.PathLike, article:model.Article, tags: list[str]) -> None:
+    with db.connect() as conn:
+        db.insert_article(conn, article, tags)
+    
+    dst = db.posted_dir.joinpath(article.id + ".md")
+    shutil.move(src_file, dst)

@@ -44,7 +44,7 @@ def connUpdate(
     return Ok(n)
 
 
-def is_exist(conn: Conn, query: str, param: Iterable) -> bool:
+def exists(conn: Conn, query: str, param: Iterable) -> bool:
     return True if conn.execute(query, param).fetchone()[0] else False
 
 
@@ -74,8 +74,11 @@ def init_cfg(conn: Conn, cfg: BlogConfig) -> None:
 
 
 def get_all_cat(conn: Conn) -> list[str]:
-    return [row[0] for row in conn.execute(stmt.Get_all_cat)]
+    rows = conn.execute(stmt.Get_all_cat).fetchall()
+    return [row["name"] for row in rows]
 
+def get_cat_id(conn:Conn, cat_name:str) -> str:
+    return conn.execute(stmt.Get_cat_id, (cat_name,)).fetchone()[0]
 
 def insert_cat(
     conn: Conn, name: str, notes: str = "", id: str = ""
@@ -89,3 +92,19 @@ def insert_cat(
         else:
             raise
     return Ok()
+
+
+def insert_tags(conn: Conn, tags: list[str], article_id: str) -> None:
+    for tag in tags:
+        if not exists(conn, stmt.Tag_name, (tag,)):
+            connUpdate(conn, stmt.Insert_tag, (tag,)).unwrap()
+            connUpdate(
+                conn,
+                stmt.Insert_tag_article,
+                {"tag_name": tag, "article_id": article_id},
+            ).unwrap()
+
+
+def insert_article(conn: Conn, article:model.Article, tags: list[str]) -> None:
+    connUpdate(conn, stmt.Insert_article, asdict(article)).unwrap()
+    insert_tags(conn, tags, article.id)

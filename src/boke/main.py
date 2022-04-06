@@ -1,5 +1,7 @@
+import os
 import click
 from result import Err, Ok
+from . import stmt
 from . import db
 from . import util
 from . import gui
@@ -83,7 +85,7 @@ def init_command(ctx: click.Context):
 @cli.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("filename", nargs=1, type=click.Path(exists=True))
 @click.pass_context
-def haha(ctx: click.Context, filename: str):
+def haha(ctx: click.Context, filename: os.PathLike):
     """Try GUI"""
     check_init(ctx)
 
@@ -91,4 +93,8 @@ def haha(ctx: click.Context, filename: str):
         case Err(e):
             print(e)
         case Ok(title):
+            if db.execute(db.exists, stmt.Article_title, (title,)):
+                print(f"Error. Title Exists (文章标题已存在):\n{title}")
+                print(f"\n(提示：文章标题不可重复，请修改文件 {filename} 的第一行)")
+                ctx.exit()
             gui.PostForm.exec(filename, title)

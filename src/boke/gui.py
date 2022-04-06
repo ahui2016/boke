@@ -1,3 +1,4 @@
+import os
 import re
 import sys
 from typing import Final, cast
@@ -103,7 +104,9 @@ class PostForm:
             cls.cats: list[str] = db.get_all_cat(conn)
 
     @classmethod
-    def init(cls, filename: str, title: str) -> None:
+    def init(cls, filename: os.PathLike, title: str) -> None:
+        cls.src_file = filename
+        cls.article_title = title
         cls.get_db_data()
 
         cls.form = QtWidgets.QDialog()
@@ -132,7 +135,7 @@ class PostForm:
         tips = "要发表的文件，由 'boke post' 命令指定"
         file_label = QtWidgets.QLabel(item_name)
         file_input = ReadonlyLineEdit(item_name)
-        file_input.setText(filename)
+        file_input.setText(str(filename))
         file_input.setReadOnly(True)
         file_input.clicked.connect(cls.click_readonly)
         file_label.setBuddy(file_input)
@@ -205,8 +208,8 @@ class PostForm:
         grid.addWidget(cls.tags_input, row, 1, 2, 1)
 
         row += 1
-        cls.tags_preview_btn = QtWidgets.QPushButton('preview')
-        cls.tags_preview_btn.clicked.connect(cls.preview_tags) # type: ignore
+        cls.tags_preview_btn = QtWidgets.QPushButton("preview")
+        cls.tags_preview_btn.clicked.connect(cls.preview_tags)  # type: ignore
         grid.addWidget(cls.tags_preview_btn, row, 0)
 
         cls.buttonBox = ButtonBox(
@@ -253,7 +256,7 @@ class PostForm:
             case Ok(tags):
                 preview = "  #".join(tags)
                 if preview:
-                    preview = "#"+preview
+                    preview = "#" + preview
                 else:
                     preview = "(Tags: empty) 没有标签"
                 alert("Tags Preview", preview)
@@ -277,7 +280,13 @@ class PostForm:
         if not article_id:
             alert("ID Error", "ID is empty (请填写ID)", Icon.Critical)
             return
-        elif db.execute(db.is_exist, stmt.Article_id, (article_id,)):
+
+        err = model.check_article_id(article_id).err()
+        if err:
+            alert("ID Error", err, Icon.Critical)
+            return
+
+        if db.execute(db.exists, stmt.Article_id, (article_id,)):
             alert("ID Error", f"ID exists (ID已存在): {article_id}", Icon.Critical)
             return
 
@@ -286,6 +295,7 @@ class PostForm:
         if not cat:
             alert("category Error", "Category is empty (请选择文章类别)", Icon.Critical)
             return
+        cat_id = db.execute(db.get_cat_id, cat)
 
         # 检查发布时间
         published = cls.date_input.text().strip()
@@ -295,11 +305,29 @@ class PostForm:
             alert("Datetime Error", str(e), Icon.Critical)
             return
 
+        # 检查标签
+        tags = []
+        match extract_tags(cls.tags_input.toPlainText()):
+            case Err(e):
+                alert("Tags Error", e, Icon.Critical)
+                return
+            case Ok(items):
+                tags = items
+
         author = cls.author_input.text().strip()
+        article = model.new_article_from(dict(
+            id=article_id,
+            cat_id=cat_id,
+            title=cls.article_title,
+            author=author,
+            published=published
+        ))
+
+        util.post_article(cls.src_file, article, tags)
         cls.form.close()
 
     @classmethod
-    def exec(cls, filename: str, title: str) -> None:
+    def exec(cls, filename: os.PathLike, title: str) -> None:
         app = QtWidgets.QApplication(sys.argv)
         cls.init(filename, title)
         cls.form.show()
@@ -328,7 +356,7 @@ def extract_tags(s: str) -> Result[list[str], str]:
 
     matched = forbid_pattern.search(s)
     if matched is not None:
-        return Err(f"Forbidden character (不可包含): {matched.group(0)}")
+        return Err(f"Forbidden character (标签不可包含): {matched.group(0)}")
 
     tags = sep_pattern.split(s)
     not_empty = [tag for tag in tags if tag]
