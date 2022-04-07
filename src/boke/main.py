@@ -34,6 +34,18 @@ def show_info(ctx: click.Context, _, value):
     ctx.exit()
 
 
+def set_author(ctx: click.Context, _, value):
+    if not value or ctx.resilient_parsing:
+        return
+    check_init(ctx)
+
+    with db.connect() as conn:
+        db.set_author(conn, value)
+
+    print(f"[Author] {value}")
+    ctx.exit()
+
+
 @click.group(invoke_without_command=True)
 @click.help_option("-h", "--help")
 @click.version_option(
@@ -51,6 +63,12 @@ def show_info(ctx: click.Context, _, value):
     help="Show informations about config and more.",
     expose_value=False,
     callback=show_info,
+)
+@click.option(
+    "--set-author",
+    help="Update the default author.",
+    expose_value=False,
+    callback=set_author,
 )
 @click.pass_context
 def cli(ctx: click.Context):
@@ -80,6 +98,27 @@ def init_command(ctx: click.Context):
         ctx.exit()
 
     gui.InitBlogForm.exec()
+
+
+@cli.command(context_settings=CONTEXT_SETTINGS)
+@click.argument("filename", nargs=1, type=click.Path(exists=True))
+@click.pass_context
+def post(ctx: click.Context, filename: os.PathLike):
+    """Post an article. (发表文章)
+
+    Example: boke post ./drafts/aaa.txt
+    """
+    check_init(ctx)
+
+    match util.get_md_file_title(filename):
+        case Err(e):
+            print(e)
+        case Ok(title):
+            if db.execute(db.exists, stmt.Article_title, (title,)):
+                print(f"Error. Title Exists (文章标题已存在):\n{title}")
+                print(f"\n(提示：文章标题不可重复，请修改文件 {filename} 的第一行)")
+                ctx.exit()
+            gui.PostForm.exec(filename, title)
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)

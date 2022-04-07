@@ -208,7 +208,7 @@ class PostForm:
         grid.addWidget(cls.tags_input, row, 1, 2, 1)
 
         row += 1
-        cls.tags_preview_btn = QtWidgets.QPushButton("preview")
+        cls.tags_preview_btn = QtWidgets.QPushButton("&preview")
         cls.tags_preview_btn.clicked.connect(cls.preview_tags)  # type: ignore
         grid.addWidget(cls.tags_preview_btn, row, 0)
 
@@ -216,6 +216,7 @@ class PostForm:
             ButtonBox.Ok | ButtonBox.Cancel,  # type: ignore
             orientation=Qt.Horizontal,
         )
+        cls.buttonBox.button(ButtonBox.Ok).setText("Post")
         cls.buttonBox.rejected.connect(cls.form.reject)  # type: ignore
         cls.buttonBox.accepted.connect(cls.accept)  # type: ignore
         vbox.addWidget(cls.buttonBox)
@@ -314,16 +315,23 @@ class PostForm:
             case Ok(items):
                 tags = items
 
+        # 如果作者就是默认作者，那么，在数据库里 author 就是空字符串。
         author = cls.author_input.text().strip()
-        article = model.new_article_from(dict(
-            id=article_id,
-            cat_id=cat_id,
-            title=cls.article_title,
-            author=author,
-            published=published
-        ))
+        if author == cls.blog_cfg.author:
+            author = ""
+        article = model.new_article_from(
+            dict(
+                id=article_id,
+                cat_id=cat_id,
+                title=cls.article_title,
+                author=author,
+                published=published,
+            )
+        )
 
+        # 发表文章（从 drafts 移动到 posted）
         util.post_article(cls.src_file, article, tags)
+        util.show_article_info(article, cat, tags, cls.blog_cfg)
         cls.form.close()
 
     @classmethod

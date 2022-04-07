@@ -80,9 +80,32 @@ def get_md_file_title(filename: os.PathLike) -> Result[str, str]:
             return model.get_md_title(first_line, model.ArticleTitleLimit)
 
 
-def post_article(src_file:os.PathLike, article:model.Article, tags: list[str]) -> None:
+def post_article(
+    src_file: os.PathLike, article: model.Article, tags: list[str]
+) -> None:
     with db.connect() as conn:
         db.insert_article(conn, article, tags)
-    
+
     dst = db.posted_dir.joinpath(article.id + ".md")
     shutil.move(src_file, dst)
+
+
+def show_article_info(article: model.Article, cat:str, tags:list[str], cfg:BlogConfig) -> None:
+    author = article.author if article.author else cfg.author
+    print("\n"
+        f"       [ID] {article.id}\n"
+        f"    [Title] {article.title}\n"
+        f"   [Author] {author}\n"
+        f" [Category] {cat}\n"
+        f"[published] {article.published}\n"
+    )
+    if tags:
+        tags_preview = "  #".join(tags)
+        print(f"     [Tags] #{tags_preview}")
+
+def show_article_info_by_id(conn:Conn, article_id:str) -> None:
+    article = db.get_article(conn, article_id)
+    cat = db.get_cat_name(conn, article.cat_id)
+    tags = db.get_tags_by_article(conn, article_id)
+    cfg = db.get_cfg(conn).unwrap()
+    show_article_info(article, cat, tags, cfg)

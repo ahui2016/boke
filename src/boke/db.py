@@ -73,12 +73,31 @@ def init_cfg(conn: Conn, cfg: BlogConfig) -> None:
         ).unwrap()
 
 
+def set_author(conn: Conn, author: str) -> None:
+    cfg = get_cfg(conn).unwrap()
+    cfg.author = author
+    update_cfg(conn, cfg)
+
+
 def get_all_cat(conn: Conn) -> list[str]:
     rows = conn.execute(stmt.Get_all_cat).fetchall()
     return [row["name"] for row in rows]
 
-def get_cat_id(conn:Conn, cat_name:str) -> str:
+
+def get_cat_id(conn: Conn, cat_name: str) -> str:
     return conn.execute(stmt.Get_cat_id, (cat_name,)).fetchone()[0]
+
+def get_cat_name(conn: Conn, cat_id: str) -> str:
+    return conn.execute(stmt.Get_cat_name, (cat_id,)).fetchone()[0]
+
+
+def get_article(conn:Conn, article_id:str) -> model.Article:
+    row = conn.execute(stmt.Get_article, (article_id,)).fetchone()
+    return model.new_article_from(row)
+
+def get_tags_by_article(conn:Conn, article_id:str) -> list[str]:
+    rows = conn.execute(stmt.Get_tags_by_article, (article_id,)).fetchall()
+    return [row[0] for row in rows]
 
 def insert_cat(
     conn: Conn, name: str, notes: str = "", id: str = ""
@@ -105,6 +124,6 @@ def insert_tags(conn: Conn, tags: list[str], article_id: str) -> None:
             ).unwrap()
 
 
-def insert_article(conn: Conn, article:model.Article, tags: list[str]) -> None:
+def insert_article(conn: Conn, article: model.Article, tags: list[str]) -> None:
     connUpdate(conn, stmt.Insert_article, asdict(article)).unwrap()
     insert_tags(conn, tags, article.id)

@@ -18,7 +18,7 @@ ArticleTitleLimit: Final = 192  # 文章标题长度上限
 Article_ID_Limit: Final = 64  # 文章 ID 长度上限（该 ID 同时也是文件名）
 
 MD_TitlePattern: Final = re.compile(r"^(#{1,6}|>|1.|-|\*) (.+)")
-Article_ID_ForbidPattern:Final = re.compile(r"[^_0-9a-zA-Z\-]")
+Article_ID_ForbidPattern: Final = re.compile(r"[^_0-9a-zA-Z\-]")
 
 
 @dataclass
@@ -35,13 +35,9 @@ class Category:
     notes: str
 
 
-def new_cat_from(row:dict) -> Category:
+def new_cat_from(row: dict) -> Category:
     cat_id = row["id"] if row["id"] else rand_id()
-    return Category(
-        id=cat_id,
-        name=row["name"],
-        notes=row["notes"]
-    )
+    return Category(id=cat_id, name=row["name"], notes=row["notes"])
 
 
 @dataclass
@@ -53,7 +49,7 @@ class Article:
     published: str
 
 
-def new_article_from(row:dict) -> Article:
+def new_article_from(row: dict) -> Article:
     article_id = row["id"] if row["id"] else date_id()
     check_article_id(article_id).unwrap()
 
@@ -61,12 +57,13 @@ def new_article_from(row:dict) -> Article:
     _ = arrow.get(published, RFC3339)
 
     return Article(
-        id = article_id,
-        cat_id = row["cat_id"],
-        title = row["title"],
-        author = row["author"],
-        published = published
+        id=article_id,
+        cat_id=row["cat_id"],
+        title=row["title"],
+        author=row["author"],
+        published=published,
     )
+
 
 def now() -> str:
     return arrow.now().format(RFC3339)
@@ -130,11 +127,13 @@ def utf8_byte_truncate(text: str, max_bytes: int) -> str:
         i -= 1
     return utf8[:i].decode("utf8")
 
-def check_article_id(article_id:str) -> Result[str,str]:
+
+def check_article_id(article_id: str) -> Result[str, str]:
     if Article_ID_ForbidPattern.search(article_id) is None:
         return Ok()
     else:
         return Err("ID 只可以由 0-9a-zA-Z 以及下划线、短横线组成")
+
 
 def get_md_title(md_first_line: str, max_bytes: int) -> Result[str, str]:
     """md_first_line 应已去除首尾空白字符。"""
