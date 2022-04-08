@@ -22,7 +22,9 @@ CREATE TABLE IF NOT EXISTS article
     cat_id      REFERENCES category(id) COLLATE NOCASE,
     title       text   NOT NULL UNIQUE COLLATE NOCASE,
     author      text   NOT NULL,
-    published   text   NOT NULL
+    published   text   NOT NULL,
+    updated     text   NOT NULL,
+    last_pub    text   NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_article_cat_id ON article(cat_id);
@@ -89,8 +91,8 @@ Insert_tag: Final = """
     """
 
 Insert_article: Final = """
-    INSERT INTO article (id, cat_id, title, author, published)
-    VALUES (:id, :cat_id, :title, :author, :published)
+    INSERT INTO article (id, cat_id, title, author, published, updated, last_pub)
+    VALUES (:id, :cat_id, :title, :author, :published, :updated, :last_pub)
     """
 
 Insert_tag_article: Final = """

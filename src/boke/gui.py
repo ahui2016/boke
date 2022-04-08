@@ -326,6 +326,8 @@ class PostForm:
                 title=cls.article_title,
                 author=author,
                 published=published,
+                updated=published,
+                last_pub=""
             )
         )
 

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <title>{{ blog.name }}</title>
+  </head>
+  <body>
+    {% for cat in cats %}
+    <h3>{{ cat.name }}</h3>
+    <ul>
+      {% for art in articles %}
+      <li>{{ art.published[:10] }} <a href="{{art.cat_id}}/{{art.id}}.html">{{art.title}}</a></li>
+      {% endfor %}
+    </ul>
+    {% endfor %}
+  </body>
+</html>

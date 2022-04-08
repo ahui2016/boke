@@ -98,6 +98,7 @@ def show_article_info(article: model.Article, cat:str, tags:list[str], cfg:BlogC
         f"   [Author] {author}\n"
         f" [Category] {cat}\n"
         f"[published] {article.published}\n"
+        f"  [updated] {article.updated}\n"
     )
     if tags:
         tags_preview = "  #".join(tags)
