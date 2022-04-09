@@ -15,7 +15,12 @@ loader: Final = jinja2.FileSystemLoader(db.templates_dir)
 jinja_env: Final = jinja2.Environment(
     loader=loader, autoescape=jinja2.select_autoescape()
 )
-md_render: Final = mistune.create_markdown(plugins=["url"])
+md_render: Final = mistune.create_markdown(plugins=[
+    'strikethrough',
+    'footnotes',
+    'table',
+    "url",
+])
 
 # 发布时，除了 template_files 之外, templates 文件夹里的全部文件都会被复制到 ouput 文件夹。
 template_files: Final = [model.index_html, model.article_html]
