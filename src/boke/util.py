@@ -61,7 +61,7 @@ def init_blog(blog_name: str, author: str) -> None:
         has_err = True
     if has_err:
         print(f"\n[Blog's name] {blog_name}" f"\n     [Author] {author}")
-        print(f"\nboke init: Failed.")
+        print("\nboke init: Failed.")
         print()
         return
 
@@ -100,7 +100,9 @@ def post_article(
     with db.connect() as conn:
         db.insert_article(conn, article, tags)
 
-    dst = db.posted_dir.joinpath(article.id + ".md")
+    dst_dir = db.posted_dir.joinpath(article.published[:4])
+    dst_dir.mkdir(exist_ok=True)
+    dst = dst_dir.joinpath(article.id + model.md_suffix)
     shutil.move(src_file, dst)
 
 

@@ -51,7 +51,7 @@ Get_metadata: Final = "SELECT value FROM metadata WHERE name=?;"
 Update_metadata: Final = "UPDATE metadata SET value=:value WHERE name=:name;"
 
 Get_all_cats: Final = """
-    SELECT * FROM category
+    SELECT * FROM category;
     """
 
 Get_cat_id: Final = """
@@ -96,9 +96,9 @@ Insert_tag: Final = """
 
 Insert_article: Final = """
     INSERT INTO article (id, cat_id, title, author, published, updated, last_pub)
-    VALUES (:id, :cat_id, :title, :author, :published, :updated, :last_pub)
+    VALUES (:id, :cat_id, :title, :author, :published, :updated, :last_pub);
     """
 
 Insert_tag_article: Final = """
-    INSERT INTO tag_article (tag_name, article_id) VALUES (:tag_name, :article_id) 
+    INSERT INTO tag_article (tag_name, article_id) VALUES (:tag_name, :article_id);
     """

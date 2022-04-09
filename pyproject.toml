@@ -15,6 +15,7 @@ dependencies = [
   "result",
   "Jinja2",
   "pyside6",
+  "mistune",
 ]
 requires-python = ">=3.10"
 dynamic = ["version", "description"]

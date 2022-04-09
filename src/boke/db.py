@@ -14,11 +14,11 @@ NoResultError = "database-no-result"
 OK = Ok("OK.")
 
 cwd = Path.cwd().resolve()
-db_path:Final = cwd.joinpath(model.DB_filename)
-drafts_dir:Final = cwd.joinpath(model.Drafts_folder_name)
-posted_dir:Final = cwd.joinpath(model.Posted_folder_name)
-output_dir:Final = cwd.joinpath(model.Output_folder_name)
-templates_dir:Final = cwd.joinpath(model.Templates_folder_name)
+db_path: Final = cwd.joinpath(model.DB_filename)
+drafts_dir: Final = cwd.joinpath(model.Drafts_folder_name)
+posted_dir: Final = cwd.joinpath(model.Posted_folder_name)
+output_dir: Final = cwd.joinpath(model.Output_folder_name)
+templates_dir: Final = cwd.joinpath(model.Templates_folder_name)
 
 
 def connect() -> Conn:

@@ -1,18 +1,24 @@
 from dataclasses import dataclass
 import re
-from typing import Final, cast
+from typing import Final
 from random import randrange
 import arrow
 from result import Err, Ok, Result
 
 
-RFC3339: Final[str] = "YYYY-MM-DDTHH:mm:ssZZ"
-DB_filename: Final[str] = "boke.db"
-Drafts_folder_name: Final[str] = "drafts"
-Posted_folder_name: Final[str] = "posted"
-Output_folder_name: Final[str] = "output"
-Templates_folder_name: Final[str] = "templates"
-Blog_cfg_name: Final[str] = "blog-config"
+RFC3339: Final = "YYYY-MM-DDTHH:mm:ssZZ"
+DB_filename: Final = "boke.db"
+Drafts_folder_name: Final = "drafts"
+Posted_folder_name: Final = "posted"
+Output_folder_name: Final = "output"
+Templates_folder_name: Final = "templates"
+Blog_cfg_name: Final = "blog-config"
+
+html_suffix: Final = ".html"
+md_suffix: Final = ".md"
+atom_xml: Final = "atom.xml"
+index_html: Final = "index.html"
+article_html: Final = "article.html"
 
 ArticleTitleLimit: Final = 192  # 文章标题长度上限
 Article_ID_Limit: Final = 64  # 文章 ID 长度上限（该 ID 同时也是文件名）
