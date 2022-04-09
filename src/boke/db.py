@@ -140,3 +140,9 @@ def insert_tags(conn: Conn, tags: list[str], article_id: str) -> None:
 def insert_article(conn: Conn, article: model.Article, tags: list[str]) -> None:
     connUpdate(conn, stmt.Insert_article, asdict(article)).unwrap()
     insert_tags(conn, tags, article.id)
+
+
+def update_last_pub(conn: Conn, article_id: str) -> None:
+    connUpdate(
+        conn, stmt.Update_last_pub, dict(last_pub=model.now(), id=article_id)
+    ).unwrap()

@@ -15,12 +15,9 @@ loader: Final = jinja2.FileSystemLoader(db.templates_dir)
 jinja_env: Final = jinja2.Environment(
     loader=loader, autoescape=jinja2.select_autoescape()
 )
-md_render: Final = mistune.create_markdown(plugins=[
-    'strikethrough',
-    'footnotes',
-    'table',
-    "url",
-])
+md_render: Final = mistune.create_markdown(
+    plugins=["strikethrough", "footnotes", "table", "url"]
+)
 
 # 发布时，除了 template_files 之外, templates 文件夹里的全部文件都会被复制到 ouput 文件夹。
 template_files: Final = [model.index_html, model.article_html]
@@ -62,20 +59,25 @@ def render_write_article(
     dst_file.write_text(html, encoding="utf-8")
 
 
-def publish_html(conn: Conn, cfg: model.BlogConfig) -> None:
+def publish_html(conn: Conn, cfg: model.BlogConfig, force_all:bool) -> None:
+    """如果 force_all is True, 就强制重新生成全部文章。
+       如果 force_all is False, 则只生成新文章与有更新的文章。
+    """
     cats: list[model.ArticlesInCat] = []
     cat_list = db.get_all_cats(conn)
     for cat in cat_list:
         articles = db.get_articles_by_cat(conn, cat.id)
         cats.append(model.ArticlesInCat(cat=cat, articles=articles))
         for article in articles:
-            render_write_article(cfg, cat.name, article)
+            if force_all is True or article.updated > article.last_pub:
+                render_write_article(cfg, cat.name, article)
+                db.update_last_pub(conn, article.id)
 
     render_write_index(cfg, cats)
 
 
-def publish_all(conn: Conn) -> None:
+def publish_all(conn: Conn, force_all:bool) -> None:
     cfg = db.get_cfg(conn).unwrap()
-    publish_html(conn, cfg)
+    publish_html(conn, cfg, force_all)
     copy_static_files()
     print("OK. (完成)")

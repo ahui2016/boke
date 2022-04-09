@@ -67,7 +67,7 @@ Insert_cat: Final = """
     """
 
 Get_articles_by_cat: Final = """
-    SELECT * FROM article WHERE cat_id=?;
+    SELECT * FROM article WHERE cat_id=? ORDER BY published DESC;
     """
 
 Get_article: Final = """
@@ -101,4 +101,8 @@ Insert_article: Final = """
 
 Insert_tag_article: Final = """
     INSERT INTO tag_article (tag_name, article_id) VALUES (:tag_name, :article_id);
+    """
+
+Update_last_pub: Final = """
+    UPDATE article SET last_pub=:last_pub WHERE id=:id;
     """
