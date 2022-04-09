@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import shutil
 import sqlite3
 from result import Err, Ok, Result
@@ -35,6 +36,18 @@ def dir_not_empty(path=".") -> bool:
     return True if os.listdir(path) else False
 
 
+def copy_tmpl_files() -> None:
+    src_folder = Path(__file__).parent.joinpath(model.Templates_folder_name)
+    if not src_folder.exists():
+        src_folder = Path(__file__).parent.parent.joinpath(model.Templates_folder_name)
+    print(src_folder)
+
+    static_files = src_folder.glob("*")
+    for src in static_files:
+        dst = db.templates_dir.joinpath(src.name)
+        shutil.copyfile(src, dst)
+
+
 def init_blog(blog_name: str, author: str) -> None:
     has_err = False
     if not blog_name:
@@ -56,6 +69,7 @@ def init_blog(blog_name: str, author: str) -> None:
     db.posted_dir.mkdir()
     db.output_dir.mkdir()
     db.templates_dir.mkdir()
+    copy_tmpl_files()
 
     with db.connect() as conn:
         conn.executescript(stmt.Create_tables)
@@ -90,9 +104,12 @@ def post_article(
     shutil.move(src_file, dst)
 
 
-def show_article_info(article: model.Article, cat:str, tags:list[str], cfg:BlogConfig) -> None:
+def show_article_info(
+    article: model.Article, cat: str, tags: list[str], cfg: BlogConfig
+) -> None:
     author = article.author if article.author else cfg.author
-    print("\n"
+    print(
+        "\n"
         f"       [ID] {article.id}\n"
         f"    [Title] {article.title}\n"
         f"   [Author] {author}\n"
@@ -103,8 +120,10 @@ def show_article_info(article: model.Article, cat:str, tags:list[str], cfg:BlogC
     if tags:
         tags_preview = "  #".join(tags)
         print(f"     [Tags] #{tags_preview}")
+        print()
 
-def show_article_info_by_id(conn:Conn, article_id:str) -> None:
+
+def show_article_info_by_id(conn: Conn, article_id: str) -> None:
     article = db.get_article(conn, article_id)
     cat = db.get_cat_name(conn, article.cat_id)
     tags = db.get_tags_by_article(conn, article_id)

@@ -1,6 +1,8 @@
 import os
 import click
 from result import Err, Ok
+
+from boke.publish import publish_all
 from . import stmt
 from . import db
 from . import util
@@ -137,3 +139,13 @@ def haha(ctx: click.Context, filename: os.PathLike):
                 print(f"\n(提示：文章标题不可重复，请修改文件 {filename} 的第一行)")
                 ctx.exit()
             gui.PostForm.exec(filename, title)
+
+
+@cli.command(context_settings=CONTEXT_SETTINGS)
+@click.pass_context
+def publish(ctx: click.Context):
+    """Publish your blog to HTML/RSS (生成 HTML 与 RSS 静态文件)"""
+    check_init(ctx)
+
+    with db.connect() as conn:
+        publish_all(conn)

@@ -47,8 +47,8 @@ class Article:
     title: str
     author: str
     published: str
-    updated: str # 最新修改时间, 如果大于 last_pub 就需要重新生成静态文件
-    last_pub: str # 上次生成静态文件的时间
+    updated: str  # 最新修改时间, 如果大于 last_pub 就需要重新生成静态文件
+    last_pub: str  # 上次生成静态文件的时间
 
 
 def new_article_from(row: dict) -> Article:

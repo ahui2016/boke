@@ -50,7 +50,7 @@ Insert_metadata: Final = "INSERT INTO metadata (name, value) VALUES (:name, :val
 Get_metadata: Final = "SELECT value FROM metadata WHERE name=?;"
 Update_metadata: Final = "UPDATE metadata SET value=:value WHERE name=:name;"
 
-Get_all_cat: Final = """
+Get_all_cats: Final = """
     SELECT * FROM category
     """
 
@@ -64,6 +64,10 @@ Get_cat_name: Final = """
 
 Insert_cat: Final = """
     INSERT INTO category (id, name, notes) VALUES (:id, :name, :notes);
+    """
+
+Get_articles_by_cat: Final = """
+    SELECT * FROM article WHERE cat_id=?;
     """
 
 Get_article: Final = """

@@ -101,7 +101,7 @@ class PostForm:
     def get_db_data(cls) -> None:
         with db.connect() as conn:
             cls.blog_cfg: model.BlogConfig = db.get_cfg(conn).unwrap()
-            cls.cats: list[str] = db.get_all_cat(conn)
+            cls.cats: list[str] = db.get_all_cats_name(conn)
 
     @classmethod
     def init(cls, filename: os.PathLike, title: str) -> None:
@@ -327,7 +327,7 @@ class PostForm:
                 author=author,
                 published=published,
                 updated=published,
-                last_pub=""
+                last_pub="",
             )
         )
 
