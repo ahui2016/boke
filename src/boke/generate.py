@@ -61,7 +61,7 @@ def render_write_article(
     dst_file.write_text(html, encoding="utf-8")
 
 
-def publish_html(
+def generate_html(
     conn: Conn, cfg: model.BlogConfig, theme: str, force_all: bool
 ) -> None:
     """如果 force_all is True, 就强制重新生成全部文章。
@@ -81,9 +81,9 @@ def publish_html(
     render_write_index(cfg, cats, theme)
 
 
-def publish_all(conn: Conn, theme: str, ignore_assets: bool, force_all: bool) -> None:
+def generate_all(conn: Conn, theme: str, ignore_assets: bool, force_all: bool) -> None:
     cfg = db.get_cfg(conn).unwrap()
-    publish_html(conn, cfg, theme, force_all)
+    generate_html(conn, cfg, theme, force_all)
     if not ignore_assets:
         copy_static_files()
     print("OK. (完成)")

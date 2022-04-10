@@ -2,9 +2,9 @@ import os
 import click
 from result import Err, Ok
 
-from boke.publish import publish_all
 from . import stmt
 from . import db
+from .generate import generate_all
 from . import util
 from . import gui
 from . import (
@@ -164,9 +164,9 @@ def haha(ctx: click.Context, filename: os.PathLike):
     help="Force to re-generate all articles.",
 )
 @click.pass_context
-def publish(ctx: click.Context, theme: str, ignore_assets: bool, force_all: bool):
-    """Publish your blog to HTML/RSS (生成 HTML 与 RSS 静态文件)"""
+def gen(ctx: click.Context, theme: str, ignore_assets: bool, force_all: bool):
+    """Generate your articles to HTML/RSS (生成 HTML 与 RSS 静态文件)"""
     check_init(ctx)
 
     with db.connect() as conn:
-        publish_all(conn, theme, ignore_assets, force_all)
+        generate_all(conn, theme, ignore_assets, force_all)
