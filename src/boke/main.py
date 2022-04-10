@@ -142,11 +142,31 @@ def haha(ctx: click.Context, filename: os.PathLike):
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
-@click.option("force_all", "--force-all", is_flag=True, default=False, help="Force to re-generate all articles.")
+@click.option(
+    "theme",
+    "-theme",
+    type=click.Choice(["simple", "pico"]),
+    default="simple",
+    help="Set the CSS style theme.",
+)
+@click.option(
+    "ignore_assets",
+    "--ignore-assets",
+    is_flag=True,
+    default=False,
+    help="Do not copy assets (e.g. CSS, LICENSE)",
+)
+@click.option(
+    "force_all",
+    "--force-all",
+    is_flag=True,
+    default=False,
+    help="Force to re-generate all articles.",
+)
 @click.pass_context
-def publish(ctx: click.Context, force_all:bool):
+def publish(ctx: click.Context, theme: str, ignore_assets: bool, force_all: bool):
     """Publish your blog to HTML/RSS (生成 HTML 与 RSS 静态文件)"""
     check_init(ctx)
 
     with db.connect() as conn:
-        publish_all(conn, force_all)
+        publish_all(conn, theme, ignore_assets, force_all)

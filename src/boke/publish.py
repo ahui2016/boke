@@ -32,16 +32,18 @@ def copy_static_files() -> None:
             shutil.copyfile(src, dst)
 
 
-def render_write_index(blog: model.BlogConfig, cats: list[model.ArticlesInCat]) -> None:
+def render_write_index(
+    blog: model.BlogConfig, cats: list[model.ArticlesInCat], theme: str
+) -> None:
     tmpl = jinja_env.get_template(model.index_html)
-    html = tmpl.render(dict(blog=blog, cats=cats))
+    html = tmpl.render(dict(blog=blog, cats=cats, theme=theme))
     output = db.output_dir.joinpath(model.index_html)
     print(f"render and write {output}")
     output.write_text(html, encoding="utf-8")
 
 
 def render_write_article(
-    blog: model.BlogConfig, cat: model.Category, article: model.Article
+    blog: model.BlogConfig, cat: model.Category, article: model.Article, theme: str
 ) -> None:
     src_file = db.posted_dir.joinpath(
         article.published[:4], article.id + model.md_suffix
@@ -54,31 +56,34 @@ def render_write_article(
     art["content"] = md_render(src_file.read_text(encoding="utf-8"))
 
     tmpl = jinja_env.get_template(model.article_html)
-    html = tmpl.render(dict(blog=blog,cat=cat,art=art))
+    html = tmpl.render(dict(blog=blog, cat=cat, art=art, theme=theme))
     print(f"render and write {dst_file}")
     dst_file.write_text(html, encoding="utf-8")
 
 
-def publish_html(conn: Conn, cfg: model.BlogConfig, force_all:bool) -> None:
+def publish_html(
+    conn: Conn, cfg: model.BlogConfig, theme: str, force_all: bool
+) -> None:
     """如果 force_all is True, 就强制重新生成全部文章。
-       如果 force_all is False, 则只生成新文章与有更新的文章。
+    如果 force_all is False, 则只生成新文章与有更新的文章。
     """
     cats: list[model.ArticlesInCat] = []
     cat_list = db.get_all_cats(conn)
     for cat in cat_list:
-        cat.notes = "" # 这里不需要用到 cat.notes
+        cat.notes = ""  # 这里不需要用到 cat.notes
         articles = db.get_articles_by_cat(conn, cat.id)
         cats.append(model.ArticlesInCat(cat=cat, articles=articles))
         for article in articles:
             if force_all is True or article.updated > article.last_pub:
-                render_write_article(cfg, cat, article)
+                render_write_article(cfg, cat, article, theme)
                 db.update_last_pub(conn, article.id)
 
-    render_write_index(cfg, cats)
+    render_write_index(cfg, cats, theme)
 
 
-def publish_all(conn: Conn, force_all:bool) -> None:
+def publish_all(conn: Conn, theme: str, ignore_assets: bool, force_all: bool) -> None:
     cfg = db.get_cfg(conn).unwrap()
-    publish_html(conn, cfg, force_all)
-    copy_static_files()
+    publish_html(conn, cfg, theme, force_all)
+    if not ignore_assets:
+        copy_static_files()
     print("OK. (完成)")
