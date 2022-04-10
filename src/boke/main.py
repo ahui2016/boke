@@ -145,7 +145,7 @@ def haha(ctx: click.Context, filename: os.PathLike):
 @click.option(
     "theme",
     "-theme",
-    type=click.Choice(["simple", "water", "new", "sakura"]),
+    type=click.Choice(["simple", "water", "sakura", "mvp"]),
     default="simple",
     help="Set the CSS style theme.",
 )
