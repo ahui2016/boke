@@ -142,10 +142,11 @@ def haha(ctx: click.Context, filename: os.PathLike):
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
+@click.option("force_all", "--force-all", is_flag=True, default=False, help="Force to re-generate all articles.")
 @click.pass_context
-def publish(ctx: click.Context):
+def publish(ctx: click.Context, force_all:bool):
     """Publish your blog to HTML/RSS (生成 HTML 与 RSS 静态文件)"""
     check_init(ctx)
 
     with db.connect() as conn:
-        publish_all(conn)
+        publish_all(conn, force_all)

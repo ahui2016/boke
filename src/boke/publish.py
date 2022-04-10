@@ -41,7 +41,7 @@ def render_write_index(blog: model.BlogConfig, cats: list[model.ArticlesInCat]) 
 
 
 def render_write_article(
-    blog: model.BlogConfig, cat: str, article: model.Article
+    blog: model.BlogConfig, cat: model.Category, article: model.Article
 ) -> None:
     src_file = db.posted_dir.joinpath(
         article.published[:4], article.id + model.md_suffix
@@ -54,7 +54,7 @@ def render_write_article(
     art["content"] = md_render(src_file.read_text(encoding="utf-8"))
 
     tmpl = jinja_env.get_template(model.article_html)
-    html = tmpl.render(dict(art=art))
+    html = tmpl.render(dict(blog=blog,cat=cat,art=art))
     print(f"render and write {dst_file}")
     dst_file.write_text(html, encoding="utf-8")
 
@@ -66,11 +66,12 @@ def publish_html(conn: Conn, cfg: model.BlogConfig, force_all:bool) -> None:
     cats: list[model.ArticlesInCat] = []
     cat_list = db.get_all_cats(conn)
     for cat in cat_list:
+        cat.notes = "" # 这里不需要用到 cat.notes
         articles = db.get_articles_by_cat(conn, cat.id)
         cats.append(model.ArticlesInCat(cat=cat, articles=articles))
         for article in articles:
             if force_all is True or article.updated > article.last_pub:
-                render_write_article(cfg, cat.name, article)
+                render_write_article(cfg, cat, article)
                 db.update_last_pub(conn, article.id)
 
     render_write_index(cfg, cats)

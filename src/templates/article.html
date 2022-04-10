@@ -8,9 +8,26 @@
     />
     <link rel="stylesheet" href="../simple.css" />
     <link rel="stylesheet" href="../style.css" />
-    <title>{{ art.title }}</title>
+    <title>{{ art.title }} - {{ blog.name }}</title>
   </head>
   <body>
     {{ art.content|safe }}
+    <div class="footer">
+      <div class="nav-buttons">
+        <a href="../index.html">&lt;&lt; Home</a>
+        <br>
+        <a href="../{{cat.id}}.html">&lt;&lt; Category ({{ cat.name }})</a>
+      </div>
+      <div class="author-date">
+        {% if art.author|length %}
+        <span>Author: {{ art.author }}</span>
+        {% else %}
+        <span>Author: {{ blog.author }}</span>
+        {% endif %}
+        <br>
+        <span>Updated at {{ art.updated[:10] }}</span>
+      </div>
+    </div>
+    <footer>LICENSE <a href="../LICENSE.txt">CC0-1.0</a></footer>
   </body>
 </html>
