@@ -20,7 +20,11 @@ md_render: Final = mistune.create_markdown(
 )
 
 # 发布时，除了 template_files 之外, templates 文件夹里的全部文件都会被复制到 ouput 文件夹。
-template_files: Final = [model.index_html, model.article_html]
+template_files: Final = [
+    "base.html",
+    model.index_html,
+    model.article_html,
+]
 
 
 def copy_static_files() -> None:
@@ -36,7 +40,7 @@ def render_write_index(
     blog: model.BlogConfig, cats: list[model.ArticlesInCat], theme: str
 ) -> None:
     tmpl = jinja_env.get_template(model.index_html)
-    html = tmpl.render(dict(blog=blog, cats=cats, theme=theme))
+    html = tmpl.render(dict(blog=blog, cats=cats, theme=theme, parent_dir=""))
     output = db.output_dir.joinpath(model.index_html)
     print(f"render and write {output}")
     output.write_text(html, encoding="utf-8")
@@ -56,7 +60,7 @@ def render_write_article(
     art["content"] = md_render(src_file.read_text(encoding="utf-8"))
 
     tmpl = jinja_env.get_template(model.article_html)
-    html = tmpl.render(dict(blog=blog, cat=cat, art=art, theme=theme))
+    html = tmpl.render(dict(blog=blog, cat=cat, art=art, theme=theme, parent_dir="../"))
     print(f"render and write {dst_file}")
     dst_file.write_text(html, encoding="utf-8")
 

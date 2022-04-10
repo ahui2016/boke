@@ -7,11 +7,17 @@
       content="width=device-width, initial-scale=1, shrink-to-fit=no"
     />
     {% block style %}
-    {% if 'pico' == theme %}
-    <link rel="stylesheet" href="pico.min.css" />
+    {% if 'water' == theme %}
+    <link rel="stylesheet" href="{{parent_dir}}water.min.css" />
+    {% elif 'new' == theme %}
+    <link rel="stylesheet" href="{{parent_dir}}new.min.css" />
+    {% elif 'sakura' == theme %}
+    <link rel="stylesheet" href="{{parent_dir}}sakura.css" media="screen" />
+    <link rel="stylesheet" href="{{parent_dir}}sakura-vader.css" media="screen and (prefers-color-scheme: dark)" />
     {% else %}
-    <link rel="stylesheet" href="simple.css" />
+    <link rel="stylesheet" href="{{parent_dir}}simple.css" />
     {% endif %}
+    <link rel="stylesheet" href="{{parent_dir}}style.css" />
     {% endblock %}
 
     {% block title %}
@@ -19,9 +25,6 @@
     {% endblock %}
   </head>
   <body>
-    <main class="container">
-    {% block main %}
-    {% endblock %}
-    </main>
+    {% block main %}{% endblock %}
   </body>
 </html>

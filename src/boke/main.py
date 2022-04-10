@@ -145,7 +145,7 @@ def haha(ctx: click.Context, filename: os.PathLike):
 @click.option(
     "theme",
     "-theme",
-    type=click.Choice(["simple", "pico"]),
+    type=click.Choice(["simple", "water", "new", "sakura"]),
     default="simple",
     help="Set the CSS style theme.",
 )
@@ -165,8 +165,12 @@ def haha(ctx: click.Context, filename: os.PathLike):
 )
 @click.pass_context
 def gen(ctx: click.Context, theme: str, ignore_assets: bool, force_all: bool):
-    """Generate your articles to HTML/RSS (生成 HTML 与 RSS 静态文件)"""
+    """Generate your articles to HTML/RSS.
+
+    生成 HTML 与 RSS 静态文件
+    """
     check_init(ctx)
 
+    print(f"Theme: {theme}.css")
     with db.connect() as conn:
         generate_all(conn, theme, ignore_assets, force_all)
