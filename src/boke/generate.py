@@ -87,7 +87,7 @@ def generate_html(conn: Conn, cfg: model.BlogConfig, force_all: bool) -> None:
 
 def generate_all(conn: Conn, theme: str, ignore_assets: bool, force_all: bool) -> None:
     cfg = db.get_cfg(conn).unwrap()
-    if theme != 'unchanged':
+    if theme != "unchanged":
         copy_theme(theme)
     generate_html(conn, cfg, force_all)
     if not ignore_assets:

@@ -128,16 +128,19 @@ def show_article_info_by_id(conn: Conn, article_id: str) -> None:
     show_article_info(article, cat, tags, cfg)
 
 
-def update_article_date(conn: Conn, article_id:str) -> None:
+def update_article_date(conn: Conn, article_id: str) -> None:
     db.update_article_date(conn, article_id)
     show_article_info_by_id(conn, article_id)
 
 
-def check_title_when_update(article_id:str, title:str, filename:os.PathLike) -> Result[str,str]:
+def check_title_when_update(
+    article_id: str, title: str, filename: os.PathLike
+) -> Result[str, str]:
     with db.connect() as conn:
         row = conn.execute(stmt.Get_Article_id_by_title, (title,)).fetchone()
         if row and row[0] != article_id:
-            print(f"Error. Title Exists (文章标题已存在):\n{title}")
+            print("Error. Title Exists (文章标题已存在):")
+            print(f"[id: {row[0]}] {title}")
             print(f"\n(提示：文章标题不可重复，请修改文件 {filename} 的第一行)")
             return Err("")
     return Ok()

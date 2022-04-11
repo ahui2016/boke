@@ -116,6 +116,7 @@ Update_article_date: Final = """
     """
 
 Update_article: Final = """
-    UPDATE article SET title=:title, author=:author, updated=:updated
+    UPDATE article
+    SET id=:id, cat_id=:cat_id, title=:title, author=:author, updated=:updated
     WHERE id=:id;
     """

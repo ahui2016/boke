@@ -97,6 +97,7 @@ class InitBlogForm:
         app.exec()
 
 
+# 这里 class 只是用来作为 namespace.
 class ArticleForm:
     @classmethod
     def init(cls, filename: os.PathLike, title: str) -> None:
@@ -329,7 +330,7 @@ class PostForm(ArticleForm):
             alert("ID Error", f"ID exists (ID已存在): {article_id}", Icon.Critical)
             return
 
-        # 检查文章类型
+        # 检查文章类别
         cat = cls.cat_list.currentText().strip()
         if not cat:
             alert("category Error", "Category is empty (请选择文章类别)", Icon.Critical)
@@ -382,16 +383,18 @@ class UpdateForm(PostForm):
         cls.form.setWindowTitle("boke update")
         cls.title.setText("Update the article")
 
-        article_id = Path(filename).stem
+        cls.article_id = Path(filename).stem
         cat = ""
         tags = []
         with db.connect() as conn:
-            article = db.get_article(conn, article_id)
+            article = db.get_article(conn, cls.article_id)
             cat = db.fetchone(conn, stmt.Get_cat_name, (article.cat_id,))
-            tags = db.get_tags_by_article(conn, article_id)
+            tags = db.get_tags_by_article(conn, cls.article_id)
+            cls.published = article.published
+            cls.last_pub = article.last_pub
 
         id_tips = "如果更改ID, 文件名与网址都会随之变更。"
-        cls.id_input.setText(article_id)
+        cls.id_input.setText(cls.article_id)
         cls.id_label.setToolTip(id_tips)
         cls.id_input.setToolTip(id_tips)
 
@@ -418,7 +421,58 @@ class UpdateForm(PostForm):
 
     @classmethod
     def accept(cls) -> None:
-        pass
+        # 检查 ID
+        new_id = cls.id_input.text().strip()
+        if not new_id:
+            alert("ID Error", "ID is empty (请填写ID)", Icon.Critical)
+            return
+
+        err = model.check_article_id(new_id).err()
+        if err:
+            alert("ID Error", err, Icon.Critical)
+            return
+
+        if new_id != cls.article_id and db.execute(db.exists, stmt.Article_id, (new_id,)):
+            alert("ID Error", f"ID exists (ID已存在): {new_id}", Icon.Critical)
+            return
+
+        # 检查文章类别
+        cat = cls.cat_list.currentText().strip()
+        if not cat:
+            alert("category Error", "Category is empty (请选择文章类别)", Icon.Critical)
+            return
+        cat_id = db.execute(db.fetchone, stmt.Get_cat_id, (cat,))
+
+        # 检查更新时间
+        updated = cls.date_input.text().strip()
+        try:
+            _ = arrow.get(updated, model.RFC3339)
+        except Exception as e:
+            alert("Datetime Error", str(e), Icon.Critical)
+            return
+
+        # 检查标签
+        tags = []
+        match extract_tags(cls.tags_input.toPlainText()):
+            case Err(e):
+                alert("Tags Error", e, Icon.Critical)
+                return
+            case Ok(items):
+                tags = items
+
+        # 如果作者就是默认作者，那么，在数据库里 author 就是空字符串。
+        author = cls.author_input.text().strip()
+        if author == cls.blog_cfg.author:
+            author = ""
+
+        art_dict = dict( id=new_id, cat_id=cat_id, title=cls.article_title, author=author, updated=updated, )
+        with db.connect() as conn:
+            db.connUpdate(conn, stmt.Update_article, art_dict)
+
+        art_dict["published"] = cls.published
+        art_dict["last_pub"] = cls.last_pub
+        util.show_article_info(model.new_article_from(art_dict), cat, tags, cls.blog_cfg)
+        cls.form.close()
 
 
 def label_center(text: str) -> QtWidgets.QLabel:

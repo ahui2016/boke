@@ -156,7 +156,7 @@ def gen(ctx: click.Context, theme: str, ignore_assets: bool, force_all: bool):
     """
     check_init(ctx)
 
-    if (not os.listdir(db.output_dir)) and (theme == 'unchanged'):
+    if (not os.listdir(db.output_dir)) and (theme == "unchanged"):
         print("Error: Missing option '-theme'.")
         ctx.exit()
 
@@ -166,13 +166,18 @@ def gen(ctx: click.Context, theme: str, ignore_assets: bool, force_all: bool):
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("filename", nargs=1, type=click.Path(exists=True))
-@click.option("date_only", "--date-only", is_flag=True, help="Set the article's update date to now.")
+@click.option(
+    "date_only",
+    "--date-only",
+    is_flag=True,
+    help="Set the article's update date to now.",
+)
 @click.pass_context
-def update(ctx: click.Context, filename:os.PathLike, date_only: bool):
+def update(ctx: click.Context, filename: os.PathLike, date_only: bool):
     """Update an article. (更新文章)
 
     Examples:
-    
+
     boke update --date-only ./posted/aaa.md
     """
     check_init(ctx)
@@ -183,7 +188,7 @@ def update(ctx: click.Context, filename:os.PathLike, date_only: bool):
         with db.connect() as conn:
             util.update_article_date(conn, article_id)
         ctx.exit()
-    
+
     match util.get_md_file_title(filename):
         case Err(e):
             print(e)
