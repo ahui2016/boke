@@ -20,34 +20,35 @@ md_render: Final = mistune.create_markdown(
 )
 
 # 发布时，除了 template_files 之外, templates 文件夹里的全部文件都会被复制到 ouput 文件夹。
-template_files: Final = [
-    "base.html",
-    model.index_html,
-    model.article_html,
-]
+tmplfile:Final = dict(base="base.html",index="index.html",article="article.html")
 
 
 def copy_static_files() -> None:
     static_files = db.templates_dir.glob("*")
     for src in static_files:
-        if src.name not in template_files and src.is_file():
+        if src.name not in tmplfile.values() and src.is_file():
             dst = db.output_dir.joinpath(src.name)
             print(f"copy static file to {dst}")
             shutil.copyfile(src, dst)
 
+def copy_theme(theme:str) -> None:
+    filename = theme+".css"
+    print(f"Theme: {filename}")
+    src = db.templates_dir.joinpath(model.Themes_folder_name, filename)
+    dst = db.output_dir.joinpath("theme.css")
+    shutil.copyfile(src, dst)
 
-def render_write_index(
-    blog: model.BlogConfig, cats: list[model.ArticlesInCat], theme: str
-) -> None:
-    tmpl = jinja_env.get_template(model.index_html)
-    html = tmpl.render(dict(blog=blog, cats=cats, theme=theme, parent_dir=""))
-    output = db.output_dir.joinpath(model.index_html)
+
+def render_write_index(blog: model.BlogConfig, cats: list[model.ArticlesInCat]) -> None:
+    tmpl = jinja_env.get_template(tmplfile["index"])
+    html = tmpl.render(dict(blog=blog, cats=cats, parent_dir=""))
+    output = db.output_dir.joinpath(tmplfile["index"])
     print(f"render and write {output}")
     output.write_text(html, encoding="utf-8")
 
 
 def render_write_article(
-    blog: model.BlogConfig, cat: model.Category, article: model.Article, theme: str
+    blog: model.BlogConfig, cat: model.Category, article: model.Article
 ) -> None:
     src_file = db.posted_dir.joinpath(
         article.published[:4], article.id + model.md_suffix
@@ -59,14 +60,14 @@ def render_write_article(
     art = asdict(article)
     art["content"] = md_render(src_file.read_text(encoding="utf-8"))
 
-    tmpl = jinja_env.get_template(model.article_html)
-    html = tmpl.render(dict(blog=blog, cat=cat, art=art, theme=theme, parent_dir="../"))
+    tmpl = jinja_env.get_template(tmplfile["article"])
+    html = tmpl.render(dict(blog=blog, cat=cat, art=art, parent_dir="../"))
     print(f"render and write {dst_file}")
     dst_file.write_text(html, encoding="utf-8")
 
 
 def generate_html(
-    conn: Conn, cfg: model.BlogConfig, theme: str, force_all: bool
+    conn: Conn, cfg: model.BlogConfig, force_all: bool
 ) -> None:
     """如果 force_all is True, 就强制重新生成全部文章。
     如果 force_all is False, 则只生成新文章与有更新的文章。
@@ -79,15 +80,16 @@ def generate_html(
         cats.append(model.ArticlesInCat(cat=cat, articles=articles))
         for article in articles:
             if force_all is True or article.updated > article.last_pub:
-                render_write_article(cfg, cat, article, theme)
+                render_write_article(cfg, cat, article)
                 db.update_last_pub(conn, article.id)
 
-    render_write_index(cfg, cats, theme)
+    render_write_index(cfg, cats)
 
 
 def generate_all(conn: Conn, theme: str, ignore_assets: bool, force_all: bool) -> None:
     cfg = db.get_cfg(conn).unwrap()
-    generate_html(conn, cfg, theme, force_all)
+    copy_theme(theme)
+    generate_html(conn, cfg, force_all)
     if not ignore_assets:
         copy_static_files()
     print("OK. (完成)")

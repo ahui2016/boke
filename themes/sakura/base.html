@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    {% block style %}
+    {% if 'water' == theme %}
+    <link rel="stylesheet" href="{{parent_dir}}water.min.css" />
+    {% elif 'mvp' == theme %}
+    <link rel="stylesheet" href="{{parent_dir}}mvp.min.css" />
+    {% elif 'sakura' == theme %}
+    <link rel="stylesheet" href="{{parent_dir}}sakura.css" media="screen" />
+    <link rel="stylesheet" href="{{parent_dir}}sakura-vader.css" media="screen and (prefers-color-scheme: dark)" />
+    {% else %}
+    <link rel="stylesheet" href="{{parent_dir}}simple.css" />
+    {% endif %}
+    <link rel="stylesheet" href="{{parent_dir}}style.css" />
+    {% endblock %}
+
+    {% block title %}
+    <title>{{ blog.name }}</title>
+    {% endblock %}
+  </head>
+  <body>
+    {% block main %}{% endblock %}
+  </body>
+</html>

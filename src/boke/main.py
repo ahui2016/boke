@@ -145,8 +145,8 @@ def haha(ctx: click.Context, filename: os.PathLike):
 @click.option(
     "theme",
     "-theme",
-    type=click.Choice(["simple", "water", "sakura", "mvp"]),
-    default="simple",
+    type=click.Choice(["simple", "water", "mvp"]),
+    required=True,
     help="Set the CSS style theme.",
 )
 @click.option(
@@ -158,6 +158,7 @@ def haha(ctx: click.Context, filename: os.PathLike):
 )
 @click.option(
     "force_all",
+    "-all",
     "--force-all",
     is_flag=True,
     default=False,
@@ -171,6 +172,5 @@ def gen(ctx: click.Context, theme: str, ignore_assets: bool, force_all: bool):
     """
     check_init(ctx)
 
-    print(f"Theme: {theme}.css")
     with db.connect() as conn:
         generate_all(conn, theme, ignore_assets, force_all)
