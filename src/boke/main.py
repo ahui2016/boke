@@ -145,7 +145,7 @@ def haha(ctx: click.Context, filename: os.PathLike):
 @click.option(
     "theme",
     "-theme",
-    type=click.Choice(["simple", "water", "mvp"]),
+    type=click.Choice(["keep", "simple", "water", "mvp"]),
     required=True,
     help="Set the CSS style theme.",
 )
@@ -173,4 +173,4 @@ def gen(ctx: click.Context, theme: str, ignore_assets: bool, force_all: bool):
     check_init(ctx)
 
     with db.connect() as conn:
-        generate_all(conn, theme, ignore_assets, force_all)
+        generate_all(conn, theme.lower(), ignore_assets, force_all)

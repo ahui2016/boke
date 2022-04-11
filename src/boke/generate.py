@@ -20,7 +20,7 @@ md_render: Final = mistune.create_markdown(
 )
 
 # 发布时，除了 template_files 之外, templates 文件夹里的全部文件都会被复制到 ouput 文件夹。
-tmplfile:Final = dict(base="base.html",index="index.html",article="article.html")
+tmplfile: Final = dict(base="base.html", index="index.html", article="article.html")
 
 
 def copy_static_files() -> None:
@@ -31,8 +31,9 @@ def copy_static_files() -> None:
             print(f"copy static file to {dst}")
             shutil.copyfile(src, dst)
 
-def copy_theme(theme:str) -> None:
-    filename = theme+".css"
+
+def copy_theme(theme: str) -> None:
+    filename = theme + ".css"
     print(f"Theme: {filename}")
     src = db.templates_dir.joinpath(model.Themes_folder_name, filename)
     dst = db.output_dir.joinpath("theme.css")
@@ -66,9 +67,7 @@ def render_write_article(
     dst_file.write_text(html, encoding="utf-8")
 
 
-def generate_html(
-    conn: Conn, cfg: model.BlogConfig, force_all: bool
-) -> None:
+def generate_html(conn: Conn, cfg: model.BlogConfig, force_all: bool) -> None:
     """如果 force_all is True, 就强制重新生成全部文章。
     如果 force_all is False, 则只生成新文章与有更新的文章。
     """
@@ -88,7 +87,8 @@ def generate_html(
 
 def generate_all(conn: Conn, theme: str, ignore_assets: bool, force_all: bool) -> None:
     cfg = db.get_cfg(conn).unwrap()
-    copy_theme(theme)
+    if theme != "keep":
+        copy_theme(theme)
     generate_html(conn, cfg, force_all)
     if not ignore_assets:
         copy_static_files()

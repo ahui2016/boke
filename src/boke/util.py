@@ -43,17 +43,6 @@ def copy_tmpl_files() -> None:
     print(src_folder)
     shutil.copytree(src_folder, db.templates_dir)
 
-    # static_files = src_folder.glob("*")
-    # for src in static_files:
-    #     dst = db.templates_dir.joinpath(src.name)
-    #     shutil.copyfile(src, dst)
-    
-    # themes_src_folder =src_folder.joinpath(model.Themes_folder_name)
-    # theme_files = themes_src_folder.glob("*")
-    # for src in theme_files:
-    #     dst = db.themes_dir.joinpath(src.name)
-    #     shutil.copyfile(src, dst)
-
 
 def init_blog(blog_name: str, author: str) -> None:
     has_err = False
@@ -75,8 +64,6 @@ def init_blog(blog_name: str, author: str) -> None:
     db.drafts_dir.mkdir()
     db.posted_dir.mkdir()
     db.output_dir.mkdir()
-    # db.templates_dir.mkdir()
-    # db.themes_dir.mkdir()
     copy_tmpl_files()
 
     with db.connect() as conn:
