@@ -86,6 +86,10 @@ Article_title: Final = """
     SELECT count(*) FROM article WHERE title=?;
     """
 
+Get_Article_id_by_title: Final = """
+    SELECT id FROM article WHERE title=?;
+    """
+
 Tag_name: Final = """
     SELECT count(*) FROM tag WHERE name=?;
     """
@@ -105,4 +109,13 @@ Insert_tag_article: Final = """
 
 Update_last_pub: Final = """
     UPDATE article SET last_pub=:last_pub WHERE id=:id;
+    """
+
+Update_article_date: Final = """
+    UPDATE article SET updated=:updated WHERE id=:id;
+    """
+
+Update_article: Final = """
+    UPDATE article SET title=:title, author=:author, updated=:updated
+    WHERE id=:id;
     """

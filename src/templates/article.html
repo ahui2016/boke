@@ -4,6 +4,9 @@
   <title>{{ art.title }} - {{ blog.name }}</title>
 {% endblock %}
 
+{% block header %}
+{% endblock %}
+
 {% block main %}
   {{ art.content|safe }}
   <div class="footer">
@@ -25,5 +28,11 @@
 {% endblock %}
 
 {% block footer %}
-<footer>LICENSE <a href="../LICENSE.txt">CC0-1.0</a></footer>
+<footer>
+  <p>
+    LICENSE <a href="../LICENSE.txt">CC0-1.0</a>
+    | RSS <a href="../atom.xml">atom.xml</a>  
+    <br>Article ID: {{ art.id }}
+  </p>
+</footer>
 {% endblock %}

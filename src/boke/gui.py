@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import re
 import sys
 from typing import Final, cast
@@ -96,56 +97,47 @@ class InitBlogForm:
         app.exec()
 
 
-class PostForm:
-    @classmethod
-    def get_db_data(cls) -> None:
-        with db.connect() as conn:
-            cls.blog_cfg: model.BlogConfig = db.get_cfg(conn).unwrap()
-            cls.cats: list[str] = db.get_all_cats_name(conn)
-
+class ArticleForm:
     @classmethod
     def init(cls, filename: os.PathLike, title: str) -> None:
         cls.src_file = filename
         cls.article_title = title
-        cls.get_db_data()
+        with db.connect() as conn:
+            cls.blog_cfg: model.BlogConfig = db.get_cfg(conn).unwrap()
+            cls.cats: list[str] = db.get_all_cats_name(conn)
 
         cls.form = QtWidgets.QDialog()
-        cls.form.setWindowTitle("boke post")
+        cls.form.setWindowTitle("boke")
         cls.form.setStyleSheet(FormStyle)
 
+        cls.title = label_center("boke")
         vbox = QtWidgets.QVBoxLayout(cls.form)
-        vbox.addWidget(label_center("Post an article"))
+        vbox.addWidget(cls.title)
 
         grid = QtWidgets.QGridLayout()
         vbox.addLayout(grid)
 
         row = 0
-        tips = "自动分配随机ID, 可修改"
-        id_label = QtWidgets.QLabel("&ID")
+        cls.id_label = QtWidgets.QLabel("&ID")
         cls.id_input = QtWidgets.QLineEdit()
         cls.id_input.setText(model.date_id())
-        id_label.setBuddy(cls.id_input)
-        id_label.setToolTip(tips)
-        cls.id_input.setToolTip(tips)
-        grid.addWidget(id_label, row, 0)
+        cls.id_label.setBuddy(cls.id_input)
+        grid.addWidget(cls.id_label, row, 0)
         grid.addWidget(cls.id_input, row, 1)
 
         row += 1
         item_name = "File"
-        tips = "要发表的文件，由 'boke post' 命令指定"
-        file_label = QtWidgets.QLabel(item_name)
-        file_input = ReadonlyLineEdit(item_name)
-        file_input.setText(str(filename))
-        file_input.setReadOnly(True)
-        file_input.clicked.connect(cls.click_readonly)
-        file_label.setBuddy(file_input)
-        file_label.setToolTip(tips)
-        file_input.setToolTip(tips)
-        grid.addWidget(file_label, row, 0)
-        grid.addWidget(file_input, row, 1)
+        cls.file_label = QtWidgets.QLabel(item_name)
+        cls.file_input = ReadonlyLineEdit(item_name)
+        cls.file_input.setText(str(filename))
+        cls.file_input.setReadOnly(True)
+        cls.file_input.clicked.connect(cls.click_readonly)
+        cls.file_label.setBuddy(cls.file_input)
+        grid.addWidget(cls.file_label, row, 0)
+        grid.addWidget(cls.file_input, row, 1)
 
         row += 1
-        tips = "自动获取第一句作为标题"
+        title_tips = "自动获取第一句作为标题"
         item_name = "Title"
         title_label = QtWidgets.QLabel(item_name)
         title_input = ReadonlyLineEdit(item_name)
@@ -154,46 +146,40 @@ class PostForm:
         title_input.setReadOnly(True)
         title_input.clicked.connect(cls.click_readonly)
         title_label.setBuddy(title_input)
-        title_label.setToolTip(tips)
-        title_input.setToolTip(tips)
+        title_label.setToolTip(title_tips)
+        title_input.setToolTip(title_tips)
         grid.addWidget(title_label, row, 0)
         grid.addWidget(title_input, row, 1)
 
         row += 1
-        tips = "自动获取默认作者，可修改"
-        author_label = QtWidgets.QLabel("&Author")
+        cls.author_label = QtWidgets.QLabel("&Author")
         cls.author_input = QtWidgets.QLineEdit()
         cls.author_input.setText(cls.blog_cfg.author)
-        author_label.setBuddy(cls.author_input)
-        author_label.setToolTip(tips)
-        cls.author_input.setToolTip(tips)
-        grid.addWidget(author_label, row, 0)
+        cls.author_label.setBuddy(cls.author_input)
+        grid.addWidget(cls.author_label, row, 0)
         grid.addWidget(cls.author_input, row, 1)
 
         row += 1
-        tips = "文章的类别, 必选"
-        cat_label = QtWidgets.QLabel("Category")
+        cat_tips = "文章的类别, 必选"
+        cls.cat_label = QtWidgets.QLabel("Category")
         cls.cat_index: int | None = None
         cls.cat_list = QtWidgets.QComboBox()
         cls.cat_list.setPlaceholderText(" ")
         cls.cat_list.addItems(cls.cats + [NewCategory])
         cls.cat_list.insertSeparator(len(cls.cats))
         cls.cat_list.textActivated.connect(cls.select_cat)  # type: ignore
-        cat_label.setBuddy(cls.cat_list)
-        cat_label.setToolTip(tips)
-        cls.cat_list.setToolTip(tips)
-        grid.addWidget(cat_label, row, 0)
+        cls.cat_label.setBuddy(cls.cat_list)
+        cls.cat_label.setToolTip(cat_tips)
+        cls.cat_list.setToolTip(cat_tips)
+        grid.addWidget(cls.cat_label, row, 0)
         grid.addWidget(cls.cat_list, row, 1)
 
         row += 1
-        tips = "发布日期，可修改（必须符合格式）"
-        date_label = QtWidgets.QLabel("&Datetime")
+        cls.date_label = QtWidgets.QLabel("&Datetime")
         cls.date_input = QtWidgets.QLineEdit()
         cls.date_input.setText(model.now())
-        date_label.setBuddy(cls.date_input)
-        date_label.setToolTip(tips)
-        cls.date_input.setToolTip(tips)
-        grid.addWidget(date_label, row, 0)
+        cls.date_label.setBuddy(cls.date_input)
+        grid.addWidget(cls.date_label, row, 0)
         grid.addWidget(cls.date_input, row, 1)
 
         row += 1
@@ -216,7 +202,6 @@ class PostForm:
             ButtonBox.Ok | ButtonBox.Cancel,  # type: ignore
             orientation=Qt.Horizontal,
         )
-        cls.buttonBox.button(ButtonBox.Ok).setText("Post")
         cls.buttonBox.rejected.connect(cls.form.reject)  # type: ignore
         cls.buttonBox.accepted.connect(cls.accept)  # type: ignore
         vbox.addWidget(cls.buttonBox)
@@ -276,6 +261,59 @@ class PostForm:
 
     @classmethod
     def accept(cls) -> None:
+        pass
+
+    @classmethod
+    def exec(cls, filename: os.PathLike, title: str) -> None:
+        app = QtWidgets.QApplication(sys.argv)
+        cls.init(filename, title)
+        cls.form.show()
+        app.exec()
+
+
+class PostForm(ArticleForm):
+    @classmethod
+    def init(cls, filename: os.PathLike, title: str) -> None:
+        super().init(filename, title)
+        cls.form.setWindowTitle("boke post")
+        cls.title.setText("Post an article")
+
+        article_id = Path(filename).stem
+        cat = ""
+        tags = []
+        with db.connect() as conn:
+            article = db.get_article(conn, article_id)
+            cat = db.fetchone(conn, stmt.Get_cat_name, (article.cat_id,))
+            tags = db.get_tags_by_article(conn, article_id)
+
+        id_tips = "自动分配随机ID, 可修改"
+        cls.id_input.setText(article_id)
+        cls.id_label.setToolTip(id_tips)
+        cls.id_input.setToolTip(id_tips)
+
+        file_tips = "要发表的文件，由 'boke post' 命令指定"
+        cls.file_label.setToolTip(file_tips)
+        cls.file_input.setToolTip(file_tips)
+
+        author_tips = "自动获取默认作者，可修改"
+        cls.author_label.setToolTip(author_tips)
+        cls.author_input.setToolTip(author_tips)
+
+        # 文章类别
+        cls.cat_list.setCurrentText(cat)
+
+        date_tips = "发布日期，可修改（必须符合格式）"
+        cls.date_label.setToolTip(date_tips)
+        cls.date_input.setToolTip(date_tips)
+
+        # 标签
+        cls.tags_input.setPlainText(", ".join(tags))
+
+        # submit button
+        cls.buttonBox.button(ButtonBox.Ok).setText("Post")
+
+    @classmethod
+    def accept(cls) -> None:
         # 检查 ID
         article_id = cls.id_input.text().strip()
         if not article_id:
@@ -296,7 +334,7 @@ class PostForm:
         if not cat:
             alert("category Error", "Category is empty (请选择文章类别)", Icon.Critical)
             return
-        cat_id = db.execute(db.get_cat_id, cat)
+        cat_id = db.execute(db.fetchone, stmt.Get_cat_id, (cat,))
 
         # 检查发布时间
         published = cls.date_input.text().strip()
@@ -336,12 +374,51 @@ class PostForm:
         util.show_article_info(article, cat, tags, cls.blog_cfg)
         cls.form.close()
 
+
+class UpdateForm(PostForm):
     @classmethod
-    def exec(cls, filename: os.PathLike, title: str) -> None:
-        app = QtWidgets.QApplication(sys.argv)
-        cls.init(filename, title)
-        cls.form.show()
-        app.exec()
+    def init(cls, filename: os.PathLike, title: str) -> None:
+        super().init(filename, title)
+        cls.form.setWindowTitle("boke update")
+        cls.title.setText("Update the article")
+
+        article_id = Path(filename).stem
+        cat = ""
+        tags = []
+        with db.connect() as conn:
+            article = db.get_article(conn, article_id)
+            cat = db.fetchone(conn, stmt.Get_cat_name, (article.cat_id,))
+            tags = db.get_tags_by_article(conn, article_id)
+
+        id_tips = "如果更改ID, 文件名与网址都会随之变更。"
+        cls.id_input.setText(article_id)
+        cls.id_label.setToolTip(id_tips)
+        cls.id_input.setToolTip(id_tips)
+
+        file_tips = "文件名"
+        cls.file_label.setToolTip(file_tips)
+        cls.file_input.setToolTip(file_tips)
+
+        author_tips = "作者"
+        cls.author_label.setToolTip(author_tips)
+        cls.author_input.setToolTip(author_tips)
+
+        # 文章类别
+        cls.cat_list.setCurrentText(cat)
+
+        date_tips = "更新日期，自动获取当前时间，可修改"
+        cls.date_label.setToolTip(date_tips)
+        cls.date_input.setToolTip(date_tips)
+
+        # 标签
+        cls.tags_input.setPlainText(", ".join(tags))
+
+        # submit button
+        cls.buttonBox.button(ButtonBox.Ok).setText("Update")
+
+    @classmethod
+    def accept(cls) -> None:
+        pass
 
 
 def label_center(text: str) -> QtWidgets.QLabel:

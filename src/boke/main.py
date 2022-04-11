@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import click
 from result import Err, Ok
 
@@ -108,26 +109,8 @@ def init_command(ctx: click.Context):
 def post(ctx: click.Context, filename: os.PathLike):
     """Post an article. (发表文章)
 
-    Example: boke post ./drafts/aaa.txt
+    Example: boke post ./drafts/aaa.md
     """
-    check_init(ctx)
-
-    match util.get_md_file_title(filename):
-        case Err(e):
-            print(e)
-        case Ok(title):
-            if db.execute(db.exists, stmt.Article_title, (title,)):
-                print(f"Error. Title Exists (文章标题已存在):\n{title}")
-                print(f"\n(提示：文章标题不可重复，请修改文件 {filename} 的第一行)")
-                ctx.exit()
-            gui.PostForm.exec(filename, title)
-
-
-@cli.command(context_settings=CONTEXT_SETTINGS)
-@click.argument("filename", nargs=1, type=click.Path(exists=True))
-@click.pass_context
-def haha(ctx: click.Context, filename: os.PathLike):
-    """Try GUI"""
     check_init(ctx)
 
     match util.get_md_file_title(filename):
@@ -145,12 +128,13 @@ def haha(ctx: click.Context, filename: os.PathLike):
 @click.option(
     "theme",
     "-theme",
-    type=click.Choice(["keep", "simple", "water", "mvp"]),
-    required=True,
+    type=click.Choice(["simple", "water", "mvp", "unchanged"]),
+    default="unchanged",
     help="Set the CSS style theme.",
 )
 @click.option(
     "ignore_assets",
+    "-ia",
     "--ignore-assets",
     is_flag=True,
     default=False,
@@ -172,5 +156,38 @@ def gen(ctx: click.Context, theme: str, ignore_assets: bool, force_all: bool):
     """
     check_init(ctx)
 
+    if (not os.listdir(db.output_dir)) and (theme == 'unchanged'):
+        print("Error: Missing option '-theme'.")
+        ctx.exit()
+
     with db.connect() as conn:
         generate_all(conn, theme.lower(), ignore_assets, force_all)
+
+
+@cli.command(context_settings=CONTEXT_SETTINGS)
+@click.argument("filename", nargs=1, type=click.Path(exists=True))
+@click.option("date_only", "--date-only", is_flag=True, help="Set the article's update date to now.")
+@click.pass_context
+def update(ctx: click.Context, filename:os.PathLike, date_only: bool):
+    """Update an article. (更新文章)
+
+    Examples:
+    
+    boke update --date-only ./posted/aaa.md
+    """
+    check_init(ctx)
+
+    article_id = Path(filename).stem
+
+    if date_only:
+        with db.connect() as conn:
+            util.update_article_date(conn, article_id)
+        ctx.exit()
+    
+    match util.get_md_file_title(filename):
+        case Err(e):
+            print(e)
+        case Ok(title):
+            if util.check_title_when_update(article_id, title, filename).is_err():
+                ctx.exit()
+            gui.UpdateForm.exec(filename, title)

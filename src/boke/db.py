@@ -48,6 +48,8 @@ def connUpdate(
 def exists(conn: Conn, query: str, param: Iterable) -> bool:
     return True if conn.execute(query, param).fetchone()[0] else False
 
+def fetchone(conn:Conn, query:str, param: Iterable) -> str:
+    return conn.execute(query, param).fetchone()[0]
 
 def get_cfg(conn: Conn) -> Result[BlogConfig, str]:
     row = conn.execute(stmt.Get_metadata, (model.Blog_cfg_name,)).fetchone()
@@ -90,12 +92,12 @@ def get_all_cats_name(conn: Conn) -> list[str]:
     return [row["name"] for row in rows]
 
 
-def get_cat_id(conn: Conn, cat_name: str) -> str:
-    return conn.execute(stmt.Get_cat_id, (cat_name,)).fetchone()[0]
+# def get_cat_id(conn: Conn, cat_name: str) -> str:
+#     return conn.execute(stmt.Get_cat_id, (cat_name,)).fetchone()[0]
 
 
-def get_cat_name(conn: Conn, cat_id: str) -> str:
-    return conn.execute(stmt.Get_cat_name, (cat_id,)).fetchone()[0]
+# def get_cat_name(conn: Conn, cat_id: str) -> str:
+#     return conn.execute(stmt.Get_cat_name, (cat_id,)).fetchone()[0]
 
 
 def get_articles_by_cat(conn: Conn, cat_id: str) -> list[model.Article]:
@@ -146,4 +148,9 @@ def insert_article(conn: Conn, article: model.Article, tags: list[str]) -> None:
 def update_last_pub(conn: Conn, article_id: str) -> None:
     connUpdate(
         conn, stmt.Update_last_pub, dict(last_pub=model.now(), id=article_id)
+    ).unwrap()
+
+def update_article_date(conn: Conn, article_id: str) -> None:
+    connUpdate(
+        conn, stmt.Update_article_date, dict(updated=model.now(), id=article_id)
     ).unwrap()

@@ -14,9 +14,8 @@
     {% endblock %}
   </head>
   <body>
-    <main>
-      {% block main %}{% endblock %}
-    </main>
+    {% block header %}{% endblock %}
+    <main>{% block main %}{% endblock %}</main>
     {% block footer %}{% endblock %}
   </body>
 </html>

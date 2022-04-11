@@ -122,7 +122,22 @@ def show_article_info(
 
 def show_article_info_by_id(conn: Conn, article_id: str) -> None:
     article = db.get_article(conn, article_id)
-    cat = db.get_cat_name(conn, article.cat_id)
+    cat = db.fetchone(conn, stmt.Get_cat_name, (article.cat_id,))
     tags = db.get_tags_by_article(conn, article_id)
     cfg = db.get_cfg(conn).unwrap()
     show_article_info(article, cat, tags, cfg)
+
+
+def update_article_date(conn: Conn, article_id:str) -> None:
+    db.update_article_date(conn, article_id)
+    show_article_info_by_id(conn, article_id)
+
+
+def check_title_when_update(article_id:str, title:str, filename:os.PathLike) -> Result[str,str]:
+    with db.connect() as conn:
+        row = conn.execute(stmt.Get_Article_id_by_title, (title,)).fetchone()
+        if row and row[0] != article_id:
+            print(f"Error. Title Exists (文章标题已存在):\n{title}")
+            print(f"\n(提示：文章标题不可重复，请修改文件 {filename} 的第一行)")
+            return Err("")
+    return Ok()
