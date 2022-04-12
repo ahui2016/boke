@@ -29,6 +29,7 @@ def posted_file_path(article_id: str, published: str) -> Path:
 def connect() -> Conn:
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
+    conn.execute(stmt.Enable_foreign_keys)
     return conn
 
 

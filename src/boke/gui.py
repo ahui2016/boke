@@ -395,7 +395,8 @@ class UpdateForm(PostForm):
         cls.author_input.setToolTip(author_tips)
 
         # 文章类别
-        cls.cat_list.setCurrentText(cat)
+        cls.cat_index = cls.cats.index(cat)
+        cls.cat_list.setCurrentIndex(cls.cat_index)
 
         # 更新日期
         date_tips = "更新日期，自动获取当前时间，可修改"

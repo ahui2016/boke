@@ -1,8 +1,8 @@
 from typing import Final
 
-Create_tables: Final = """
-PRAGMA foreign_keys = ON;
+Enable_foreign_keys: Final = "PRAGMA foreign_keys = 1;"
 
+Create_tables: Final = """
 CREATE TABLE IF NOT EXISTS metadata
 (
     name    text   NOT NULL UNIQUE,
