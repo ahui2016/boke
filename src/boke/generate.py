@@ -51,9 +51,7 @@ def render_write_index(blog: model.BlogConfig, cats: list[model.ArticlesInCat]) 
 def render_write_article(
     blog: model.BlogConfig, cat: model.Category, article: model.Article
 ) -> None:
-    src_file = db.posted_dir.joinpath(
-        article.published[:4], article.id + model.md_suffix
-    )
+    src_file = db.posted_file_path(article.id, article.published)
     dst_dir = db.output_dir.joinpath(article.published[:4])
     dst_dir.mkdir(exist_ok=True)
     dst_file = dst_dir.joinpath(article.id + model.html_suffix)

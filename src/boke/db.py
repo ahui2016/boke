@@ -22,6 +22,10 @@ templates_dir: Final = cwd.joinpath(model.Templates_folder_name)
 themes_dir: Final = templates_dir.joinpath(model.Themes_folder_name)
 
 
+def posted_file_path(article_id: str, published: str) -> Path:
+    return posted_dir.joinpath(published[:4], article_id + model.md_suffix)
+
+
 def connect() -> Conn:
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row

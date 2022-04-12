@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 import re
 import sys
@@ -100,7 +99,7 @@ class InitBlogForm:
 # 这里 class 只是用来作为 namespace.
 class ArticleForm:
     @classmethod
-    def init(cls, filename: os.PathLike, title: str) -> None:
+    def init(cls, filename: Path, title: str) -> None:
         cls.src_file = filename
         cls.article_title = title
         with db.connect() as conn:
@@ -265,7 +264,7 @@ class ArticleForm:
         pass
 
     @classmethod
-    def exec(cls, filename: os.PathLike, title: str) -> None:
+    def exec(cls, filename: Path, title: str) -> None:
         app = QtWidgets.QApplication(sys.argv)
         cls.init(filename, title)
         cls.form.show()
@@ -274,21 +273,12 @@ class ArticleForm:
 
 class PostForm(ArticleForm):
     @classmethod
-    def init(cls, filename: os.PathLike, title: str) -> None:
+    def init(cls, filename: Path, title: str) -> None:
         super().init(filename, title)
         cls.form.setWindowTitle("boke post")
         cls.title.setText("Post an article")
 
-        article_id = Path(filename).stem
-        cat = ""
-        tags = []
-        with db.connect() as conn:
-            article = db.get_article(conn, article_id)
-            cat = db.fetchone(conn, stmt.Get_cat_name, (article.cat_id,))
-            tags = db.get_tags_by_article(conn, article_id)
-
         id_tips = "自动分配随机ID, 可修改"
-        cls.id_input.setText(article_id)
         cls.id_label.setToolTip(id_tips)
         cls.id_input.setToolTip(id_tips)
 
@@ -300,15 +290,9 @@ class PostForm(ArticleForm):
         cls.author_label.setToolTip(author_tips)
         cls.author_input.setToolTip(author_tips)
 
-        # 文章类别
-        cls.cat_list.setCurrentText(cat)
-
         date_tips = "发布日期，可修改（必须符合格式）"
         cls.date_label.setToolTip(date_tips)
         cls.date_input.setToolTip(date_tips)
-
-        # 标签
-        cls.tags_input.setPlainText(", ".join(tags))
 
         # submit button
         cls.buttonBox.button(ButtonBox.Ok).setText("Post")
@@ -378,12 +362,12 @@ class PostForm(ArticleForm):
 
 class UpdateForm(PostForm):
     @classmethod
-    def init(cls, filename: os.PathLike, title: str) -> None:
+    def init(cls, filename: Path, title: str) -> None:
         super().init(filename, title)
         cls.form.setWindowTitle("boke update")
         cls.title.setText("Update the article")
 
-        cls.article_id = Path(filename).stem
+        cls.article_id = filename.stem
         cat = ""
         tags = []
         with db.connect() as conn:
@@ -392,6 +376,10 @@ class UpdateForm(PostForm):
             tags = db.get_tags_by_article(conn, cls.article_id)
             cls.published = article.published
             cls.last_pub = article.last_pub
+
+        # 只能更新 posted 文件夹里的文件
+        if util.not_in_posted(cls.src_file, cls.article_id, cls.published):
+            sys.exit()
 
         id_tips = "如果更改ID, 文件名与网址都会随之变更。"
         cls.id_input.setText(cls.article_id)
@@ -409,6 +397,7 @@ class UpdateForm(PostForm):
         # 文章类别
         cls.cat_list.setCurrentText(cat)
 
+        # 更新日期
         date_tips = "更新日期，自动获取当前时间，可修改"
         cls.date_label.setToolTip(date_tips)
         cls.date_input.setToolTip(date_tips)
@@ -432,7 +421,8 @@ class UpdateForm(PostForm):
             alert("ID Error", err, Icon.Critical)
             return
 
-        if new_id != cls.article_id and db.execute(db.exists, stmt.Article_id, (new_id,)):
+        new_id_exists = db.execute(db.exists, stmt.Article_id, (new_id,))
+        if new_id != cls.article_id and new_id_exists:
             alert("ID Error", f"ID exists (ID已存在): {new_id}", Icon.Critical)
             return
 
@@ -451,6 +441,14 @@ class UpdateForm(PostForm):
             alert("Datetime Error", str(e), Icon.Critical)
             return
 
+        if updated <= cls.last_pub:
+            alert(
+                "Datetime Error",
+                f"更新日期不可早于上次执行 'boke gen' 的时间 ({cls.last_pub})",
+                Icon.Critical,
+            )
+            return
+
         # 检查标签
         tags = []
         match extract_tags(cls.tags_input.toPlainText()):
@@ -465,13 +463,35 @@ class UpdateForm(PostForm):
         if author == cls.blog_cfg.author:
             author = ""
 
-        art_dict = dict( id=new_id, cat_id=cat_id, title=cls.article_title, author=author, updated=updated, )
+        art_dict = dict(
+            id=cls.article_id,
+            new_id=new_id,
+            cat_id=cat_id,
+            title=cls.article_title,
+            author=author,
+            updated=updated,
+        )
+
+        # 更新数据库
         with db.connect() as conn:
             db.connUpdate(conn, stmt.Update_article, art_dict)
 
+        # 更新文件名
+        if new_id != cls.article_id:
+            src = db.posted_file_path(cls.article_id, cls.published)
+            target = db.posted_file_path(new_id, cls.published)
+            print(src)
+            print(target)
+            src.rename(target)
+
+        # 显示更新后的文章信息
         art_dict["published"] = cls.published
         art_dict["last_pub"] = cls.last_pub
-        util.show_article_info(model.new_article_from(art_dict), cat, tags, cls.blog_cfg)
+        if new_id != cls.article_id:
+            art_dict["id"] = new_id
+        util.show_article_info(
+            model.new_article_from(art_dict), cat, tags, cls.blog_cfg
+        )
         cls.form.close()
 
 

@@ -72,7 +72,7 @@ def init_blog(blog_name: str, author: str) -> None:
         show_cfg(conn)
 
 
-def get_first_line(filename: os.PathLike) -> Result[str, str]:
+def get_first_line(filename: Path) -> Result[str, str]:
     with open(filename, "r", encoding="utf-8") as f:
         for line in f:
             line = line.strip()
@@ -81,7 +81,7 @@ def get_first_line(filename: os.PathLike) -> Result[str, str]:
     return Err(f"Cannot get title from {filename}")
 
 
-def get_md_file_title(filename: os.PathLike) -> Result[str, str]:
+def get_md_file_title(filename: Path) -> Result[str, str]:
     match get_first_line(filename):
         case Err(e):
             return Err(e)
@@ -89,9 +89,7 @@ def get_md_file_title(filename: os.PathLike) -> Result[str, str]:
             return model.get_md_title(first_line, model.ArticleTitleLimit)
 
 
-def post_article(
-    src_file: os.PathLike, article: model.Article, tags: list[str]
-) -> None:
+def post_article(src_file: Path, article: model.Article, tags: list[str]) -> None:
     with db.connect() as conn:
         db.insert_article(conn, article, tags)
 
@@ -134,7 +132,7 @@ def update_article_date(conn: Conn, article_id: str) -> None:
 
 
 def check_title_when_update(
-    article_id: str, title: str, filename: os.PathLike
+    article_id: str, title: str, filename: Path
 ) -> Result[str, str]:
     with db.connect() as conn:
         row = conn.execute(stmt.Get_Article_id_by_title, (title,)).fetchone()
@@ -144,3 +142,21 @@ def check_title_when_update(
             print(f"\n(提示：文章标题不可重复，请修改文件 {filename} 的第一行)")
             return Err("")
     return Ok()
+
+
+def not_in_drafts(draft: Path) -> bool:
+    in_drafts = db.drafts_dir.joinpath(draft.name)
+    if not in_drafts.exists() or not draft.samefile(in_drafts):
+        print(f"The file is not in 'drafts': {draft}")
+        print("(提示: 'boke post' 命令只能用来发布 drafts 文件夹里的文件。)")
+        return True
+    return False
+
+
+def not_in_posted(src_file: Path, article_id: str, published: str) -> bool:
+    other = db.posted_file_path(article_id, published)
+    if not other.exists() or not src_file.samefile(other):
+        print(f"The file is not in 'posted': {src_file}")
+        print("(提示: 'boke update' 命令只能用来更新 posted 文件夹里的文件。)")
+        return True
+    return False

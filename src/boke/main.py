@@ -113,7 +113,11 @@ def post(ctx: click.Context, filename: os.PathLike):
     """
     check_init(ctx)
 
-    match util.get_md_file_title(filename):
+    draft = Path(filename)
+    if util.not_in_drafts(draft):
+        ctx.exit()
+
+    match util.get_md_file_title(draft):
         case Err(e):
             print(e)
         case Ok(title):
@@ -121,7 +125,7 @@ def post(ctx: click.Context, filename: os.PathLike):
                 print(f"Error. Title Exists (文章标题已存在):\n{title}")
                 print(f"\n(提示：文章标题不可重复，请修改文件 {filename} 的第一行)")
                 ctx.exit()
-            gui.PostForm.exec(filename, title)
+            gui.PostForm.exec(draft, title)
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
@@ -182,17 +186,24 @@ def update(ctx: click.Context, filename: os.PathLike, date_only: bool):
     """
     check_init(ctx)
 
-    article_id = Path(filename).stem
+    art_file = Path(filename)
+    article_id = art_file.stem
+
+    id_exists = db.execute(db.exists, stmt.Article_id, (article_id,))
+    if not id_exists:
+        print(f"Not Found. 找不到 ID: {article_id}")
+        print("(提示: 'boke update' 命令只能用来更新 posted 文件夹里的文件。)")
+        ctx.exit()
 
     if date_only:
         with db.connect() as conn:
             util.update_article_date(conn, article_id)
         ctx.exit()
 
-    match util.get_md_file_title(filename):
+    match util.get_md_file_title(art_file):
         case Err(e):
             print(e)
         case Ok(title):
-            if util.check_title_when_update(article_id, title, filename).is_err():
+            if util.check_title_when_update(article_id, title, art_file).is_err():
                 ctx.exit()
-            gui.UpdateForm.exec(filename, title)
+            gui.UpdateForm.exec(art_file, title)

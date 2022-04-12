@@ -37,8 +37,8 @@ CREATE TABLE IF NOT EXISTS tag
 
 CREATE TABLE IF NOT EXISTS tag_article
 (
-    tag_name     REFERENCES tag(name)   COLLATE NOCASE,
-    article_id   REFERENCES article(id) COLLATE NOCASE
+    tag_name     REFERENCES tag(name)   ON UPDATE CASCADE COLLATE NOCASE,
+    article_id   REFERENCES article(id) ON UPDATE CASCADE COLLATE NOCASE
 );
 
 CREATE INDEX IF NOT EXISTS idx_tag_article_tag ON tag_article(tag_name);
@@ -117,6 +117,6 @@ Update_article_date: Final = """
 
 Update_article: Final = """
     UPDATE article
-    SET id=:id, cat_id=:cat_id, title=:title, author=:author, updated=:updated
+    SET id=:new_id, cat_id=:cat_id, title=:title, author=:author, updated=:updated
     WHERE id=:id;
     """
