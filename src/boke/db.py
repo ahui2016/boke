@@ -54,7 +54,7 @@ def exists(conn: Conn, query: str, param: Iterable) -> bool:
     return True if conn.execute(query, param).fetchone()[0] else False
 
 
-def fetchone(conn: Conn, query: str, param: Iterable) -> str:
+def fetchone(conn: Conn, query: str, param: Iterable):
     return conn.execute(query, param).fetchone()[0]
 
 
@@ -114,6 +114,11 @@ def get_tags_by_article(conn: Conn, article_id: str) -> list[str]:
     return [row[0] for row in rows]
 
 
+def count_articles_by_tag(conn: Conn, tag_name: str) -> int:
+    rows = conn.execute(stmt.Get_articles_by_tag, (tag_name,)).fetchall()
+    return len(rows)
+
+
 def insert_cat(
     conn: Conn, name: str, notes: str = "", id: str = ""
 ) -> Result[str, str]:
@@ -129,14 +134,13 @@ def insert_cat(
 
 
 def insert_tags(conn: Conn, tags: list[str], article_id: str) -> None:
+    if not tags:
+        return
     for tag in tags:
         if not exists(conn, stmt.Tag_name, (tag,)):
             connUpdate(conn, stmt.Insert_tag, (tag,)).unwrap()
-            connUpdate(
-                conn,
-                stmt.Insert_tag_article,
-                {"tag_name": tag, "article_id": article_id},
-            ).unwrap()
+    params = [{"tag_name": tag, "article_id": article_id} for tag in tags]
+    connUpdate(conn, stmt.Insert_tag_article, params, many=True).unwrap()
 
 
 def insert_article(conn: Conn, article: model.Article, tags: list[str]) -> None:
@@ -154,3 +158,13 @@ def update_article_date(conn: Conn, article_id: str) -> None:
     connUpdate(
         conn, stmt.Update_article_date, dict(updated=model.now(), id=article_id)
     ).unwrap()
+
+
+def delete_tags(conn: Conn, article_id: str, tags: list[str]) -> None:
+    if not tags:
+        return
+    params = [{"tag_name": tag, "article_id": article_id} for tag in tags]
+    connUpdate(conn, stmt.Delete_tag_article, params, many=True).unwrap()
+    for tag in tags:
+        if count_articles_by_tag(conn, tag) == 0:
+            connUpdate(conn, stmt.Delete_tag, (tag,)).unwrap()

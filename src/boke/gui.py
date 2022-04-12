@@ -476,6 +476,7 @@ class UpdateForm(PostForm):
         # 更新数据库
         with db.connect() as conn:
             db.connUpdate(conn, stmt.Update_article, art_dict)
+            util.update_tags(conn, new_id, tags)
 
         # 更新文件名
         if new_id != cls.article_id:

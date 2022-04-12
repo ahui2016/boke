@@ -135,7 +135,7 @@ def check_title_when_update(
     article_id: str, title: str, filename: Path
 ) -> Result[str, str]:
     with db.connect() as conn:
-        row = conn.execute(stmt.Get_Article_id_by_title, (title,)).fetchone()
+        row = conn.execute(stmt.Get_article_id_by_title, (title,)).fetchone()
         if row and row[0] != article_id:
             print("Error. Title Exists (文章标题已存在):")
             print(f"[id: {row[0]}] {title}")
@@ -160,3 +160,10 @@ def not_in_posted(src_file: Path, article_id: str, published: str) -> bool:
         print("(提示: 'boke update' 命令只能用来更新 posted 文件夹里的文件。)")
         return True
     return False
+
+
+def update_tags(conn: Conn, article_id: str, new_tags: list[str]) -> None:
+    old_tags = db.get_tags_by_article(conn, article_id)
+    diff_tags = model.tags_diff(new_tags, old_tags)
+    db.insert_tags(conn, diff_tags["to_add"], article_id)
+    db.delete_tags(conn, article_id, diff_tags["to_del"])

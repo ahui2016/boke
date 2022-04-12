@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import re
-from typing import Final
+from typing import Final, TypedDict
 from random import randrange
 import arrow
 from result import Err, Ok, Result
@@ -173,3 +173,29 @@ def unique_str_list(str_list: list[str]) -> list[str]:
         if item.upper() not in upper_items:
             items.append(item)
     return items
+
+
+class DiffTags(TypedDict):
+    """tags_diff 函数的返回值的类型"""
+
+    to_add: list[str]
+    to_del: list[str]
+
+
+def tags_diff(new_tags: list[str], old_tags: list[str]) -> DiffTags:
+    """返回需要新增的标签与需要删除的标签"""
+    diff_tags = DiffTags(to_add=[], to_del=[])
+    upper_new_tags = [tag.upper() for tag in new_tags]
+    upper_old_tags = [tag.upper() for tag in old_tags]
+
+    # new_tags 里有，但 old_tags 里没有的，需要添加到数据库。
+    for tag in new_tags:
+        if tag.upper() not in upper_old_tags:
+            diff_tags["to_add"].append(tag)
+
+    # old_tags 里有，但 new_tags 里没有的，需要从数据库中删除。
+    for tag in old_tags:
+        if tag.upper() not in upper_new_tags:
+            diff_tags["to_del"].append(tag)
+
+    return diff_tags

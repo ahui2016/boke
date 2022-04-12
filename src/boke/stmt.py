@@ -78,6 +78,10 @@ Get_tags_by_article: Final = """
     SELECT tag_name FROM tag_article WHERE article_id=?;
     """
 
+Get_articles_by_tag = """
+    SELECT article_id FROM tag_article WHERE tag_name=?;
+    """
+
 Article_id: Final = """
     SELECT count(*) FROM article WHERE id=?;
     """
@@ -86,7 +90,7 @@ Article_title: Final = """
     SELECT count(*) FROM article WHERE title=?;
     """
 
-Get_Article_id_by_title: Final = """
+Get_article_id_by_title: Final = """
     SELECT id FROM article WHERE title=?;
     """
 
@@ -107,6 +111,10 @@ Insert_tag_article: Final = """
     INSERT INTO tag_article (tag_name, article_id) VALUES (:tag_name, :article_id);
     """
 
+Delete_tag_article = """
+    DELETE FROM tag_article WHERE tag_name=:tag_name and article_id=:article_id;
+    """
+
 Update_last_pub: Final = """
     UPDATE article SET last_pub=:last_pub WHERE id=:id;
     """
@@ -119,4 +127,8 @@ Update_article: Final = """
     UPDATE article
     SET id=:new_id, cat_id=:cat_id, title=:title, author=:author, updated=:updated
     WHERE id=:id;
+    """
+
+Delete_tag = """
+    DELETE FROM tag WHERE name=?;
     """
