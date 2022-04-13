@@ -119,6 +119,13 @@ def count_articles_by_tag(conn: Conn, tag_name: str) -> int:
     return len(rows)
 
 
+def get_cat(conn: Conn, cat_id: str) -> model.Category | None:
+    row = conn.execute(stmt.Get_cat, (cat_id,)).fetchone()
+    if not row:
+        return None
+    return model.new_cat_from(row)
+
+
 def insert_cat(
     conn: Conn, name: str, notes: str = "", id: str = ""
 ) -> Result[str, str]:
@@ -128,6 +135,17 @@ def insert_cat(
     except Exception as e:
         if "UNIQUE constraint failed" in str(e):
             return Err(f"Category Exists (类别已存在): {cat.name}")
+        else:
+            raise
+    return Ok()
+
+
+def update_cat(conn: Conn, name: str, notes: str, cat_id: str) -> Result[str, str]:
+    try:
+        conn.execute(stmt.Update_cat, dict(name=name, notes=notes, id=cat_id))
+    except Exception as e:
+        if "UNIQUE constraint failed" in str(e):
+            return Err(f"Category Exists (类别已存在): {name}")
         else:
             raise
     return Ok()

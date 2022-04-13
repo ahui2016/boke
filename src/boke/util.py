@@ -167,3 +167,13 @@ def update_tags(conn: Conn, article_id: str, new_tags: list[str]) -> None:
     diff_tags = model.tags_diff(new_tags, old_tags)
     db.insert_tags(conn, diff_tags["to_add"], article_id)
     db.delete_tags(conn, article_id, diff_tags["to_del"])
+
+
+def show_cats(conn: Conn, show_notes: bool) -> None:
+    cats = db.get_all_cats(conn)
+    for cat in cats:
+        print(f"[id:{cat.id}] {cat.name}")
+        if show_notes and cat.notes:
+            print("---------")
+            print(f"{cat.notes}")
+        print()

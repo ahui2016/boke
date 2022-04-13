@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block main %}
+  {% for item in cats %}
+  <h3>{{ item.cat.name }}</h3>
+  <ul>
+    {% for art in item.articles %}
+    <li>{{ art.published[:10] }} <a href="{{art.published[:4]}}/{{art.id}}.html">{{art.title}}</a></li>
+    {% endfor %}
+  </ul>
+  {% endfor %}
+{% endblock %}

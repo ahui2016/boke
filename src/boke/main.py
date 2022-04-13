@@ -207,3 +207,42 @@ def update(ctx: click.Context, filename: os.PathLike, date_only: bool):
             if util.check_title_when_update(article_id, title, art_file).is_err():
                 ctx.exit()
             gui.UpdateForm.exec(art_file, title)
+
+
+@cli.command(context_settings=CONTEXT_SETTINGS)
+@click.option("cat_list", "-l", "--list", is_flag=True, help="List out all categories.")
+@click.option(
+    "show_notes",
+    "-sn",
+    "--show-notes",
+    is_flag=True,
+    help="Show notes about every category.",
+)
+@click.argument("cat_id", nargs=1, required=False)
+@click.pass_context
+def cat(ctx: click.Context, cat_list: bool, show_notes: bool, cat_id: str):
+    """List out all categories, or modify a category.
+
+    列出全部文章类别，或更改类别信息。
+
+    Examples:
+
+    boke cat -l/--list  (显示文章类别列表)
+
+    boke cat -l -sn     (显示文章类别列表，并且包含类别说明)
+
+    boke cat v5zt       (更改 id:v5zt 的类别的信息)
+    """
+    check_init(ctx)
+
+    with db.connect() as conn:
+        if cat_list:
+            util.show_cats(conn, show_notes)
+            ctx.exit()
+        elif cat_id:
+            if len(cat_id) != 4:
+                print(f"id 错误（应由 4 个字符组成）: {cat_id}")
+                return
+            gui.CatForm.exec(cat_id)
+        else:
+            click.echo(ctx.get_help())

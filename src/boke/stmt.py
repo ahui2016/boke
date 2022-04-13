@@ -62,8 +62,16 @@ Get_cat_name: Final = """
     SELECT name FROM category WHERE id=?;
     """
 
+Get_cat: Final = """
+    SELECT * FROM category WHERE id=?;
+    """
+
 Insert_cat: Final = """
     INSERT INTO category (id, name, notes) VALUES (:id, :name, :notes);
+    """
+
+Update_cat: Final = """
+    UPDATE category SET name=:name, notes=:notes WHERE id=:id;
     """
 
 Get_articles_by_cat: Final = """

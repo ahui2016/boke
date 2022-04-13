@@ -97,6 +97,100 @@ class InitBlogForm:
 
 
 # 这里 class 只是用来作为 namespace.
+class CatForm:
+    @classmethod
+    def init(cls, cat_id: str) -> None:
+        cls.cat_id = cat_id
+        conn = db.connect()
+        cat = db.get_cat(conn, cat_id)            
+        conn.close()
+        if not cat:
+            print(f"Not Found: {cat_id}")
+            print("（提示：可使用命令 'boke cat -l' 查看文章类别的 id）")
+            sys.exit()
+
+        cls.form = QtWidgets.QDialog()
+        cls.form.setWindowTitle("boke cat")
+        cls.form.setStyleSheet(FormStyle)
+
+        vbox = QtWidgets.QVBoxLayout(cls.form)
+
+        vbox.addWidget(label_center("Category"))
+
+        grid = QtWidgets.QGridLayout()
+        vbox.addLayout(grid)
+
+        row = 0
+        item_name = "ID"
+        cls.id_label = QtWidgets.QLabel(item_name)
+        cls.id_input = ReadonlyLineEdit(item_name)
+        cls.id_input.clicked.connect(cls.click_readonly)
+        cls.id_input.setText(cat_id)
+        cls.id_label.setBuddy(cls.id_input)
+        grid.addWidget(cls.id_label, row, 0)
+        grid.addWidget(cls.id_input, row, 1)
+
+        row += 1
+        cls.name_label = QtWidgets.QLabel("Name")
+        cls.name_input = QtWidgets.QLineEdit()
+        cls.name_input.setText(cat.name)
+        cls.name_label.setBuddy(cls.name_input)
+        grid.addWidget(cls.name_label, row, 0)
+        grid.addWidget(cls.name_input, row, 1)
+
+        row += 1
+        cls.notes_label = QtWidgets.QLabel("Notes")
+        cls.notes_input = QtWidgets.QPlainTextEdit()
+        cls.notes_input.setPlainText(cat.notes)
+        cls.notes_input.setFixedHeight(70)
+        cls.notes_label.setBuddy(cls.notes_input)
+        cls.notes_label.setBuddy(cls.notes_input)
+        grid.addWidget(cls.notes_label, row, 0)
+        grid.addWidget(cls.notes_input, row, 1)
+
+        cls.buttonBox = ButtonBox(
+            ButtonBox.Ok | ButtonBox.Cancel,  # type: ignore
+            orientation=Qt.Horizontal,
+        )
+        cls.buttonBox.button(ButtonBox.Ok).setText("Update")
+        cls.buttonBox.rejected.connect(cls.form.reject)  # type: ignore
+        cls.buttonBox.accepted.connect(cls.accept)  # type: ignore
+        vbox.addWidget(cls.buttonBox)
+
+        cls.form.resize(500, cls.form.sizeHint().height())
+
+    @classmethod
+    def click_readonly(cls, args: tuple[str, str]) -> None:
+        padding = "                                       "
+        alert(args[0], args[1] + padding, Icon.Information)
+
+    @classmethod
+    def accept(cls) -> None:
+        name = cls.name_input.text().strip()
+        notes = cls.notes_input.toPlainText().strip()
+        with db.connect() as conn:
+            err = db.update_cat(conn,name,notes,cls.cat_id).err()
+            if err:
+                alert("Name Error", err, Icon.Critical)
+                return
+
+        print(f"\n[id:{cls.cat_id}] {name}")
+        if notes:
+            print("---------")
+            print(f"{notes}")
+        print()
+        cls.form.close()
+        # QtWidgets.QDialog.accept(cls.form) # 这句与 close() 的效果差不多。
+
+    @classmethod
+    def exec(cls, cat_id: str) -> None:
+        app = QtWidgets.QApplication(sys.argv)
+        cls.init(cat_id)
+        cls.form.show()
+        app.exec()
+
+
+# 这里 class 只是用来作为 namespace.
 class ArticleForm:
     @classmethod
     def init(cls, filename: Path, title: str) -> None:
