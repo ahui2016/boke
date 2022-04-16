@@ -102,7 +102,7 @@ class CatForm:
     def init(cls, cat_id: str) -> None:
         cls.cat_id = cat_id
         conn = db.connect()
-        cat = db.get_cat(conn, cat_id)            
+        cat = db.get_cat(conn, cat_id)
         conn.close()
         if not cat:
             print(f"Not Found: {cat_id}")
@@ -169,7 +169,7 @@ class CatForm:
         name = cls.name_input.text().strip()
         notes = cls.notes_input.toPlainText().strip()
         with db.connect() as conn:
-            err = db.update_cat(conn,name,notes,cls.cat_id).err()
+            err = db.update_cat(conn, name, notes, cls.cat_id).err()
             if err:
                 alert("Name Error", err, Icon.Critical)
                 return

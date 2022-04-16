@@ -1,12 +1,16 @@
 {% extends "base.html" %}
 
+{% block title%}
+  <title>{{ data.cat.name }} - {{ blog.name }}</title>
+{% endblock %}
+
 {% block main %}
-  {% for item in cats %}
-  <h3>{{ item.cat.name }}</h3>
-  <ul>
-    {% for art in item.articles %}
-    <li>{{ art.published[:10] }} <a href="{{art.published[:4]}}/{{art.id}}.html">{{art.title}}</a></li>
-    {% endfor %}
-  </ul>
+<div class="text-right"><a href="index.html">&lt;&lt; Home</a></div>
+<h2>{{ data.cat.name }}</h2>
+<div class="CatNotes">{{ data.cat.notes }}</div>
+<ul>
+  {% for art in data.articles %}
+  <li>{{ art.published[:10] }} <a href="{{art.published[:4]}}/{{art.id}}.html">{{art.title}}</a></li>
   {% endfor %}
+</ul>
 {% endblock %}

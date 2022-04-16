@@ -20,7 +20,9 @@ md_render: Final = mistune.create_markdown(
 )
 
 # 发布时，除了 template_files 之外, templates 文件夹里的全部文件都会被复制到 ouput 文件夹。
-tmplfile: Final = dict(base="base.html", index="index.html", article="article.html")
+tmplfile: Final = dict(
+    base="base.html", index="index.html", cat="cat.html", article="article.html"
+)
 
 
 def copy_static_files() -> None:
@@ -48,6 +50,14 @@ def render_write_index(blog: model.BlogConfig, cats: list[model.ArticlesInCat]) 
     output.write_text(html, encoding="utf-8")
 
 
+def render_write_cat(blog: model.BlogConfig, data: model.ArticlesInCat) -> None:
+    tmpl = jinja_env.get_template(tmplfile["cat"])
+    html = tmpl.render(dict(blog=blog, data=data, parent_dir=""))
+    output = db.output_dir.joinpath(data.cat.id + model.html_suffix)
+    print(f"render and write ({data.cat.name}) {output}")
+    output.write_text(html, encoding="utf-8")
+
+
 def render_write_article(
     blog: model.BlogConfig, cat: model.Category, article: model.Article
 ) -> None:
@@ -72,8 +82,9 @@ def generate_html(conn: Conn, cfg: model.BlogConfig, force_all: bool) -> None:
     cats: list[model.ArticlesInCat] = []
     cat_list = db.get_all_cats(conn)
     for cat in cat_list:
-        cat.notes = ""  # 这里不需要用到 cat.notes
         articles = db.get_articles_by_cat(conn, cat.id)
+        render_write_cat(cfg, model.ArticlesInCat(cat=cat, articles=articles))
+        cat.notes = ""  # 后续不需要用到 cat.notes
         cats.append(model.ArticlesInCat(cat=cat, articles=articles))
         for article in articles:
             if force_all is True or article.updated > article.last_pub:
