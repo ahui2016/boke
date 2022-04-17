@@ -90,6 +90,10 @@ Get_articles_by_tag = """
     SELECT article_id FROM tag_article WHERE tag_name=?;
     """
 
+Get_recent_articles = """
+    SELECT * FROM article ORDER BY published DESC LIMIT ?;
+    """
+
 Article_id: Final = """
     SELECT count(*) FROM article WHERE id=?;
     """

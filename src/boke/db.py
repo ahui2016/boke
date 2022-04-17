@@ -104,6 +104,11 @@ def get_articles_by_cat(conn: Conn, cat_id: str) -> list[model.Article]:
     return [model.new_article_from(row) for row in rows]
 
 
+def get_recent_articles(conn: Conn, limit: int) -> list[model.Article]:
+    rows = conn.execute(stmt.Get_recent_articles, (limit,)).fetchall()
+    return [model.new_article_from(row) for row in rows]
+
+
 def get_article(conn: Conn, article_id: str) -> model.Article:
     row = conn.execute(stmt.Get_article, (article_id,)).fetchone()
     return model.new_article_from(row)

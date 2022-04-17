@@ -30,7 +30,7 @@ Article_ID_ForbidPattern: Final = re.compile(r"[^_0-9a-zA-Z\-]")
 class BlogConfig:
     name: str  # 博客名称
     author: str  # 默认作者（每篇文章也可独立设定作者）
-    home_recent_max: int = 5  # 首页 "最近更新" 列表中的项目上限
+    home_recent_max: int = 20  # 首页 "最近更新" 列表中的项目上限
 
 
 @dataclass
