@@ -38,6 +38,7 @@ class ReadonlyLineEdit(QtWidgets.QLineEdit):
     def __init__(self, name: str):
         super().__init__()
         self.name = name
+        self.setReadOnly(True)
 
     def mousePressEvent(self, event):
         self.clicked.emit((self.name, self.text()))
@@ -158,6 +159,7 @@ class CatForm:
         vbox.addWidget(cls.buttonBox)
 
         cls.form.resize(500, cls.form.sizeHint().height())
+        cls.notes_input.setFocus()
 
     @classmethod
     def click_readonly(cls, args: tuple[str, str]) -> None:
@@ -224,7 +226,6 @@ class ArticleForm:
         cls.file_label = QtWidgets.QLabel(item_name)
         cls.file_input = ReadonlyLineEdit(item_name)
         cls.file_input.setText(str(filename))
-        cls.file_input.setReadOnly(True)
         cls.file_input.clicked.connect(cls.click_readonly)
         cls.file_label.setBuddy(cls.file_input)
         grid.addWidget(cls.file_label, row, 0)
@@ -237,7 +238,6 @@ class ArticleForm:
         title_input = ReadonlyLineEdit(item_name)
         title_input.setText(title)
         title_input.cursorBackward(False, len(title))
-        title_input.setReadOnly(True)
         title_input.clicked.connect(cls.click_readonly)
         title_label.setBuddy(title_input)
         title_label.setToolTip(title_tips)

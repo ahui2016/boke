@@ -21,7 +21,11 @@ md_render: Final = mistune.create_markdown(
 
 # 发布时，除了 template_files 之外, templates 文件夹里的全部文件都会被复制到 ouput 文件夹。
 tmplfile: Final = dict(
-    base="base.html", index="index.html", cat="cat.html", article="article.html"
+    base="base.html",
+    index="index.html",
+    cat="cat.html",
+    article="article.html",
+    tag="tag.html",
 )
 
 
@@ -52,11 +56,23 @@ def render_write_index(
     output.write_text(html, encoding="utf-8")
 
 
-def render_write_cat(blog: model.BlogConfig, data: model.ArticlesInCat) -> None:
+def render_write_cat(
+    blog: model.BlogConfig, cat: model.Category, articles: list[model.Article]
+) -> None:
     tmpl = jinja_env.get_template(tmplfile["cat"])
-    html = tmpl.render(dict(blog=blog, data=data, parent_dir=""))
-    output = db.output_dir.joinpath(data.cat.id + model.html_suffix)
-    print(f"render and write ({data.cat.name}) {output}")
+    html = tmpl.render(dict(blog=blog, cat=cat, articles=articles, parent_dir=""))
+    output = db.output_dir.joinpath(cat.id + model.html_suffix)
+    print(f"render and write ({cat.name}) {output}")
+    output.write_text(html, encoding="utf-8")
+
+
+def render_write_tag(
+    blog: model.BlogConfig, tag: model.Tag, articles: list[model.Article]
+) -> None:
+    tmpl = jinja_env.get_template(tmplfile["cat"])
+    html = tmpl.render(dict(blog=blog, tag=tag, articles=articles, parent_dir=""))
+    output = db.output_dir.joinpath(tag.id + model.html_suffix)
+    print(f"render and write ({tag.name}) {output}")
     output.write_text(html, encoding="utf-8")
 
 
@@ -101,7 +117,7 @@ def generate_html(conn: Conn, cfg: model.BlogConfig, force_all: bool) -> None:
     cat_list = db.get_all_cats(conn)
     for cat in cat_list:
         articles = db.get_articles_by_cat(conn, cat.id)
-        render_write_cat(cfg, model.ArticlesInCat(cat=cat, articles=articles))
+        render_write_cat(cfg, cat, articles)
         cat.notes = ""  # 后续不需要用到 cat.notes
         for article in articles:
             if force_all is True or article.updated > article.last_pub:

@@ -15,6 +15,8 @@ Templates_folder_name: Final = "templates"
 Themes_folder_name: Final = "themes"
 Blog_cfg_name: Final = "blog-config"
 
+cat_id_prefix: Final = "cat_"
+tag_id_prefix: Final = "tag_"
 html_suffix: Final = ".html"
 md_suffix: Final = ".md"
 atom_xml: Final = "atom.xml"
@@ -41,8 +43,18 @@ class Category:
 
 
 def new_cat_from(row: dict) -> Category:
-    cat_id = row["id"] if row["id"] else rand_id()
+    cat_id = row["id"] if row["id"] else rand_id(cat_id_prefix)
     return Category(id=cat_id, name=row["name"], notes=row["notes"])
+
+
+@dataclass
+class Tag:
+    id: str
+    name: str
+
+def new_tag_from(row: dict) -> Tag:
+    tag_id = row["id"] if row["id"] else rand_id(tag_id_prefix)
+    return Tag(id=tag_id, name=row["name"])
 
 
 @dataclass
@@ -113,12 +125,12 @@ def date_id() -> str:
     return base_repr(now, 36)
 
 
-def rand_id() -> str:
-    """只有 3～4 个字符的随机字符串"""
+def rand_id(prefix:str) -> str:
+    """前缀 + 只有 3～4 个字符的随机字符串"""
     n_min = int("100", 36)
     n_max = int("zzzz", 36)
     n_rand = randrange(n_min, n_max + 1)
-    return base_repr(n_rand, 36)
+    return prefix + base_repr(n_rand, 36)
 
 
 def byte_len(s: str) -> int:

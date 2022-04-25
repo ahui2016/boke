@@ -1,10 +1,15 @@
 {% extends "base.html" %}
 
 {% block main %}
+<header>
+  <h1>{{ blog.name }}</h1>
+</header>
+
 <h3>Recent articles</h3>
 <ul>
   {% for art in articles %}
-  <li>{{ art.published[:10] }} [{{ art.cat_name }}] <a href="{{art.published[:4]}}/{{art.id}}.html">{{art.title}}</a></li>
+  <li>{{ art.published[:10] }} [{{ art.cat_name }}]
+    <a href="{{art.published[:4]}}/{{art.id}}.html">{{art.title}}</a></li>
   {% endfor %}
 </ul>
 

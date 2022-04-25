@@ -32,18 +32,19 @@ CREATE INDEX IF NOT EXISTS idx_article_published ON article(published);
 
 CREATE TABLE IF NOT EXISTS tag
 (
-    name   text   PRIMARY KEY COLLATE NOCASE
+    id     text   PRIMARY KEY COLLATE NOCASE,
+    name   text   NOT NULL UNIQUE COLLATE NOCASE
 );
 
 CREATE TABLE IF NOT EXISTS tag_article
 (
-    tag_name     REFERENCES tag(name)   ON UPDATE CASCADE COLLATE NOCASE,
+    tag_id       REFERENCES tag(id)     COLLATE NOCASE,
     article_id   REFERENCES article(id) ON UPDATE CASCADE COLLATE NOCASE
 );
 
-CREATE INDEX IF NOT EXISTS idx_tag_article_tag ON tag_article(tag_name);
+CREATE INDEX IF NOT EXISTS idx_tag_article_tag ON tag_article(tag_id);
 CREATE INDEX IF NOT EXISTS idx_tag_article_article ON tag_article(article_id);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_tag_article ON tag_article(tag_name, article_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_tag_article ON tag_article(tag_id, article_id);
 """
 
 Insert_metadata: Final = "INSERT INTO metadata (name, value) VALUES (:name, :value);"
@@ -82,12 +83,18 @@ Get_article: Final = """
     SELECT * FROM article WHERE id=?;
     """
 
+Get_all_tags: Final = """
+    SELECT * FROM tag; 
+    """
+
 Get_tags_by_article: Final = """
-    SELECT tag_name FROM tag_article WHERE article_id=?;
+    SELECT tag.name FROM tag_article, tag
+    WHERE tag_article.tag_id=tag.id and article_id=?;
     """
 
 Get_articles_by_tag = """
-    SELECT article_id FROM tag_article WHERE tag_name=?;
+    SELECT article_id FROM tag_article, tag
+    WHERE tag_article.tag_id=tag.id and tag.name=?;
     """
 
 Get_recent_articles = """
@@ -109,9 +116,12 @@ Get_article_id_by_title: Final = """
 Tag_name: Final = """
     SELECT count(*) FROM tag WHERE name=?;
     """
+Get_tag_id: Final = """
+    SELECT id FROM tag WHERE name=?;
+    """
 
 Insert_tag: Final = """
-    INSERT INTO tag (name) VALUES (?);
+    INSERT INTO tag (id, name) VALUES (:id, :name);
     """
 
 Insert_article: Final = """
@@ -120,11 +130,12 @@ Insert_article: Final = """
     """
 
 Insert_tag_article: Final = """
-    INSERT INTO tag_article (tag_name, article_id) VALUES (:tag_name, :article_id);
+    INSERT INTO tag_article (tag_id, article_id) VALUES (:tag_id, :article_id);
     """
 
 Delete_tag_article = """
-    DELETE FROM tag_article WHERE tag_name=:tag_name and article_id=:article_id;
+    DELETE FROM tag_article WHERE article_id=:article_id and
+    tag_id=(SELECT id FROM tag WHERE tag.name=:tag_name);
     """
 
 Update_last_pub: Final = """
