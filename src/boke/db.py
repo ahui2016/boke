@@ -98,9 +98,11 @@ def get_all_cats_name(conn: Conn) -> list[str]:
     rows = conn.execute(stmt.Get_all_cats).fetchall()
     return [row["name"] for row in rows]
 
-def get_all_tag_names(conn: Conn) -> list[model.Tag]:
+
+def get_all_tags(conn: Conn) -> list[model.Tag]:
     rows = conn.execute(stmt.Get_all_tags).fetchall()
     return [model.new_tag_from(row) for row in rows]
+
 
 def get_articles_by_cat(conn: Conn, cat_id: str) -> list[model.Article]:
     rows = conn.execute(stmt.Get_articles_by_cat, (cat_id,)).fetchall()
@@ -127,6 +129,14 @@ def count_articles_by_tag(conn: Conn, tag_name: str) -> int:
     return len(rows)
 
 
+def get_articles_by_tag(conn: Conn, tag_name: str) -> list[model.Article]:
+    rows = conn.execute(stmt.Get_articles_by_tag, (tag_name,)).fetchall()
+    articles = []
+    for row in rows:
+        articles.append(get_article(conn, row[0]))
+    return articles
+
+
 def get_cat(conn: Conn, cat_id: str) -> model.Category | None:
     row = conn.execute(stmt.Get_cat, (cat_id,)).fetchone()
     if not row:
@@ -148,7 +158,9 @@ def insert_cat(
     return Ok()
 
 
-def update_cat(conn: Conn, name: str, notes: str, cat_id: str) -> Result[str, str]:
+def update_cat(
+    conn: Conn, name: str, notes: str, cat_id: str
+) -> Result[str, str]:
     try:
         conn.execute(stmt.Update_cat, dict(name=name, notes=notes, id=cat_id))
     except Exception as e:
@@ -166,16 +178,20 @@ def insert_tags(conn: Conn, tags: list[str], article_id: str) -> None:
     for tag_name in tags:
         tag_id = conn.execute(stmt.Get_tag_id, (tag_name,)).fetchone()
         if not tag_id:
-            tag = model.new_tag_from({"name":tag_name})
+            tag = model.new_tag_from({"name": tag_name})
             tag_ids.append(tag.id)
             connUpdate(conn, stmt.Insert_tag, asdict(tag)).unwrap()
         else:
             tag_ids.append(tag_id[0])
-    params = [{"tag_id": tag_id, "article_id": article_id} for tag_id in tag_ids]
+    params = [
+        {"tag_id": tag_id, "article_id": article_id} for tag_id in tag_ids
+    ]
     connUpdate(conn, stmt.Insert_tag_article, params, many=True).unwrap()
 
 
-def insert_article(conn: Conn, article: model.Article, tags: list[str]) -> None:
+def insert_article(
+    conn: Conn, article: model.Article, tags: list[str]
+) -> None:
     connUpdate(conn, stmt.Insert_article, asdict(article)).unwrap()
     insert_tags(conn, tags, article.id)
 
@@ -188,7 +204,9 @@ def update_last_pub(conn: Conn, article_id: str) -> None:
 
 def update_article_date(conn: Conn, article_id: str) -> None:
     connUpdate(
-        conn, stmt.Update_article_date, dict(updated=model.now(), id=article_id)
+        conn,
+        stmt.Update_article_date,
+        dict(updated=model.now(), id=article_id),
     ).unwrap()
 
 

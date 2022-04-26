@@ -39,7 +39,9 @@ def dir_not_empty(path=".") -> bool:
 def copy_tmpl_files() -> None:
     src_folder = Path(__file__).parent.joinpath(model.Templates_folder_name)
     if not src_folder.exists():
-        src_folder = Path(__file__).parent.parent.joinpath(model.Templates_folder_name)
+        src_folder = Path(__file__).parent.parent.joinpath(
+            model.Templates_folder_name
+        )
     print(src_folder)
     shutil.copytree(src_folder, db.templates_dir)
 
@@ -89,7 +91,9 @@ def get_md_file_title(filename: Path) -> Result[str, str]:
             return model.get_md_title(first_line, model.ArticleTitleLimit)
 
 
-def post_article(src_file: Path, article: model.Article, tags: list[str]) -> None:
+def post_article(
+    src_file: Path, article: model.Article, tags: list[str]
+) -> None:
     with db.connect() as conn:
         db.insert_article(conn, article, tags)
 

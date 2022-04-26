@@ -27,7 +27,9 @@ def show_info(ctx: click.Context, _, value):
         return
     check_init(ctx)
 
-    print(f"\n           [boke] {__file__}" f"\n        [version] {__version__}")
+    print(
+        f"\n           [boke] {__file__}" f"\n        [version] {__version__}"
+    )
 
     with db.connect() as conn:
         util.show_cfg(conn)
@@ -204,13 +206,17 @@ def update(ctx: click.Context, filename: os.PathLike, date_only: bool):
         case Err(e):
             print(e)
         case Ok(title):
-            if util.check_title_when_update(article_id, title, art_file).is_err():
+            if util.check_title_when_update(
+                article_id, title, art_file
+            ).is_err():
                 ctx.exit()
             gui.UpdateForm.exec(art_file, title)
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
-@click.option("cat_list", "-l", "--list", is_flag=True, help="List out all categories.")
+@click.option(
+    "cat_list", "-l", "--list", is_flag=True, help="List out all categories."
+)
 @click.option(
     "show_notes",
     "-sn",

@@ -52,6 +52,7 @@ class Tag:
     id: str
     name: str
 
+
 def new_tag_from(row: dict) -> Tag:
     tag_id = row["id"] if row["id"] else rand_id(tag_id_prefix)
     return Tag(id=tag_id, name=row["name"])
@@ -125,7 +126,7 @@ def date_id() -> str:
     return base_repr(now, 36)
 
 
-def rand_id(prefix:str) -> str:
+def rand_id(prefix: str) -> str:
     """前缀 + 只有 3～4 个字符的随机字符串"""
     n_min = int("100", 36)
     n_max = int("zzzz", 36)

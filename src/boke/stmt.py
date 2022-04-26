@@ -47,7 +47,9 @@ CREATE INDEX IF NOT EXISTS idx_tag_article_article ON tag_article(article_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_tag_article ON tag_article(tag_id, article_id);
 """
 
-Insert_metadata: Final = "INSERT INTO metadata (name, value) VALUES (:name, :value);"
+Insert_metadata: Final = (
+    "INSERT INTO metadata (name, value) VALUES (:name, :value);"
+)
 Get_metadata: Final = "SELECT value FROM metadata WHERE name=?;"
 Update_metadata: Final = "UPDATE metadata SET value=:value WHERE name=:name;"
 

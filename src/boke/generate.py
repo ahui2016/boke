@@ -47,10 +47,15 @@ def copy_theme(theme: str) -> None:
 
 
 def render_write_index(
-    blog: model.BlogConfig, cats: list[model.Category], articles: list
+    blog: model.BlogConfig,
+    cats: list[model.Category],
+    tags: list[model.Tag],
+    articles: list,
 ) -> None:
     tmpl = jinja_env.get_template(tmplfile["index"])
-    html = tmpl.render(dict(blog=blog, cats=cats, articles=articles, parent_dir=""))
+    html = tmpl.render(
+        dict(blog=blog, cats=cats, tags=tags, articles=articles, parent_dir="")
+    )
     output = db.output_dir.joinpath(tmplfile["index"])
     print(f"render and write {output}")
     output.write_text(html, encoding="utf-8")
@@ -60,7 +65,9 @@ def render_write_cat(
     blog: model.BlogConfig, cat: model.Category, articles: list[model.Article]
 ) -> None:
     tmpl = jinja_env.get_template(tmplfile["cat"])
-    html = tmpl.render(dict(blog=blog, cat=cat, articles=articles, parent_dir=""))
+    html = tmpl.render(
+        dict(blog=blog, cat=cat, articles=articles, parent_dir="")
+    )
     output = db.output_dir.joinpath(cat.id + model.html_suffix)
     print(f"render and write ({cat.name}) {output}")
     output.write_text(html, encoding="utf-8")
@@ -69,15 +76,20 @@ def render_write_cat(
 def render_write_tag(
     blog: model.BlogConfig, tag: model.Tag, articles: list[model.Article]
 ) -> None:
-    tmpl = jinja_env.get_template(tmplfile["cat"])
-    html = tmpl.render(dict(blog=blog, tag=tag, articles=articles, parent_dir=""))
+    tmpl = jinja_env.get_template(tmplfile["tag"])
+    html = tmpl.render(
+        dict(blog=blog, tag=tag, articles=articles, parent_dir="")
+    )
     output = db.output_dir.joinpath(tag.id + model.html_suffix)
     print(f"render and write ({tag.name}) {output}")
     output.write_text(html, encoding="utf-8")
 
 
 def render_write_article(
-    blog: model.BlogConfig, cat: model.Category, article: model.Article
+    blog: model.BlogConfig,
+    cat: model.Category,
+    tags: list[model.Tag],
+    article: model.Article,
 ) -> None:
     src_file = db.posted_file_path(article.id, article.published)
     dst_dir = db.output_dir.joinpath(article.published[:4])
@@ -88,7 +100,9 @@ def render_write_article(
     art["content"] = md_render(src_file.read_text(encoding="utf-8"))
 
     tmpl = jinja_env.get_template(tmplfile["article"])
-    html = tmpl.render(dict(blog=blog, cat=cat, art=art, parent_dir="../"))
+    html = tmpl.render(
+        dict(blog=blog, cat=cat, tags=tags, art=art, parent_dir="../")
+    )
     print(f"render and write {dst_file}")
     dst_file.write_text(html, encoding="utf-8")
 
@@ -114,6 +128,11 @@ def generate_html(conn: Conn, cfg: model.BlogConfig, force_all: bool) -> None:
     """如果 force_all is True, 就强制重新生成全部文章。
     如果 force_all is False, 则只生成新文章与有更新的文章。
     """
+    tags = db.get_all_tags(conn)
+    for tag in tags:
+        articles = db.get_articles_by_tag(conn, tag.name)
+        render_write_tag(cfg, tag, articles)
+
     cat_list = db.get_all_cats(conn)
     for cat in cat_list:
         articles = db.get_articles_by_cat(conn, cat.id)
@@ -121,15 +140,18 @@ def generate_html(conn: Conn, cfg: model.BlogConfig, force_all: bool) -> None:
         cat.notes = ""  # 后续不需要用到 cat.notes
         for article in articles:
             if force_all is True or article.updated > article.last_pub:
-                render_write_article(cfg, cat, article)
+                render_write_article(cfg, cat, tags, article)
                 db.update_last_pub(conn, article.id)
 
     articles = db.get_recent_articles(conn, cfg.home_recent_max)
     arts = set_cat_name(cat_list, articles)
-    render_write_index(cfg, cat_list, arts)
+
+    render_write_index(cfg, cat_list, tags, arts)
 
 
-def generate_all(conn: Conn, theme: str, ignore_assets: bool, force_all: bool) -> None:
+def generate_all(
+    conn: Conn, theme: str, ignore_assets: bool, force_all: bool
+) -> None:
     cfg = db.get_cfg(conn).unwrap()
     if theme != "unchanged":
         copy_theme(theme)

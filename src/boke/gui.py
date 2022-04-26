@@ -405,13 +405,17 @@ class PostForm(ArticleForm):
             return
 
         if db.execute(db.exists, stmt.Article_id, (article_id,)):
-            alert("ID Error", f"ID exists (ID已存在): {article_id}", Icon.Critical)
+            alert(
+                "ID Error", f"ID exists (ID已存在): {article_id}", Icon.Critical
+            )
             return
 
         # 检查文章类别
         cat = cls.cat_list.currentText().strip()
         if not cat:
-            alert("category Error", "Category is empty (请选择文章类别)", Icon.Critical)
+            alert(
+                "category Error", "Category is empty (请选择文章类别)", Icon.Critical
+            )
             return
         cat_id = db.execute(db.fetchone, stmt.Get_cat_id, (cat,))
 
@@ -524,7 +528,9 @@ class UpdateForm(PostForm):
         # 检查文章类别
         cat = cls.cat_list.currentText().strip()
         if not cat:
-            alert("category Error", "Category is empty (请选择文章类别)", Icon.Critical)
+            alert(
+                "category Error", "Category is empty (请选择文章类别)", Icon.Critical
+            )
             return
         cat_id = db.execute(db.fetchone, stmt.Get_cat_id, (cat,))
 

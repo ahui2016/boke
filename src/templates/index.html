@@ -19,4 +19,11 @@
   <a href="{{cat.id}}.html">{{cat.name}}</a>
   {% endfor %}
 </div>
+
+<h3>Tags</h3>
+<div class="Tags">
+  {% for tag in tags %}
+  <a href="{{tag.id}}.html">{{tag.name}}</a>
+  {% endfor %}
+</div>
 {% endblock %}

@@ -25,3 +25,7 @@ Home = "https://github.com/ahui2016/boke"
 
 [project.scripts]
 boke = "boke.main:cli"
+
+[tool.black]
+line-length = 79
+
