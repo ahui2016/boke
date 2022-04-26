@@ -39,15 +39,11 @@ def show_info(ctx: click.Context, _, value):
     ctx.exit()
 
 
-def set_author(ctx: click.Context, _, value):
+def set_blog_info(ctx: click.Context, _, value):
     if not value or ctx.resilient_parsing:
         return
     check_init(ctx)
-
-    with db.connect() as conn:
-        db.set_author(conn, value)
-
-    print(f"[Author] {value}")
+    gui.UpdateBlogForm.exec()
     ctx.exit()
 
 
@@ -70,10 +66,11 @@ def set_author(ctx: click.Context, _, value):
     callback=show_info,
 )
 @click.option(
-    "--set-author",
-    help="Update the default author.",
+    "--blog-info",
+    is_flag=True,
+    help="Update informations of the blog.",
     expose_value=False,
-    callback=set_author,
+    callback=set_blog_info,
 )
 @click.pass_context
 def cli(ctx: click.Context):

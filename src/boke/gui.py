@@ -98,6 +98,66 @@ class InitBlogForm:
 
 
 # 这里 class 只是用来作为 namespace.
+class UpdateBlogForm:
+    @classmethod
+    def init(cls) -> None:
+        with db.connect() as conn:
+            cls.blog_cfg = db.get_cfg(conn).unwrap()
+
+        cls.form = QtWidgets.QDialog()
+        cls.form.setWindowTitle("boke --blog-info")
+        cls.form.setStyleSheet(FormStyle)
+
+        vbox = QtWidgets.QVBoxLayout(cls.form)
+
+        vbox.addWidget(label_center("Update blog info"))
+
+        grid = QtWidgets.QGridLayout()
+        vbox.addLayout(grid)
+
+        name_label = QtWidgets.QLabel("Blog's name")
+        cls.name_input = QtWidgets.QLineEdit()
+        cls.name_input.setText(cls.blog_cfg.name)
+        name_label.setBuddy(cls.name_input)
+        grid.addWidget(name_label, 0, 0)
+        grid.addWidget(cls.name_input, 0, 1)
+
+        author_label = QtWidgets.QLabel("Author")
+        cls.author_input = QtWidgets.QLineEdit()
+        cls.author_input.setText(cls.blog_cfg.author)
+        author_label.setBuddy(cls.author_input)
+        grid.addWidget(author_label, 1, 0)
+        grid.addWidget(cls.author_input, 1, 1)
+
+        cls.buttonBox = ButtonBox(
+            ButtonBox.Ok | ButtonBox.Cancel,  # type: ignore
+            orientation=Qt.Horizontal,
+        )
+        cls.buttonBox.rejected.connect(cls.form.reject)  # type: ignore
+        cls.buttonBox.accepted.connect(cls.accept)  # type: ignore
+        vbox.addWidget(cls.buttonBox)
+
+        cls.form.resize(500, cls.form.sizeHint().height())
+
+    @classmethod
+    def accept(cls) -> None:
+        cls.blog_cfg.name = cls.name_input.text().strip()
+        cls.blog_cfg.author = cls.author_input.text().strip()
+        with db.connect() as conn:
+            db.update_cfg(conn, cls.blog_cfg)
+            util.show_cfg(conn)
+        cls.form.close()
+        # QtWidgets.QDialog.accept(cls.form) # 这句与 close() 的效果差不多。
+
+    @classmethod
+    def exec(cls) -> None:
+        app = QtWidgets.QApplication(sys.argv)
+        cls.init()
+        cls.form.show()
+        app.exec()
+
+
+# 这里 class 只是用来作为 namespace.
 class CatForm:
     @classmethod
     def init(cls, cat_id: str) -> None:

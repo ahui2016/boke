@@ -24,14 +24,6 @@ def show_cfg(conn: Conn, cfg: BlogConfig | None = None) -> None:
     print()
 
 
-def update_blog_info(conn: Conn, blog_name: str, author: str) -> None:
-    cfg = db.get_cfg(conn).unwrap()
-    cfg.name = blog_name
-    cfg.author = author
-    db.update_cfg(conn, cfg)
-    show_cfg(conn, cfg)
-
-
 def dir_not_empty(path=".") -> bool:
     return True if os.listdir(path) else False
 
