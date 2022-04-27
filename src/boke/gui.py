@@ -134,6 +134,16 @@ class UpdateBlogForm:
         grid.addWidget(cls.author_input, row, 1)
 
         row += 1
+        tips = "以 http 开头，完整的网址"
+        website_label = QtWidgets.QLabel("Website")
+        cls.website_input = QtWidgets.QLineEdit()
+        cls.website_input.setText(cls.blog_cfg.website)
+        cls.website_input.setToolTip(tips)
+        website_label.setBuddy(cls.website_input)
+        grid.addWidget(website_label, row, 0)
+        grid.addWidget(cls.website_input, row, 1)
+
+        row += 1
         tips = "首页最近更新列表上限"
         recent_max_label = QtWidgets.QLabel("recent_max")
         cls.recent_max_input = QtWidgets.QSpinBox()
@@ -159,12 +169,27 @@ class UpdateBlogForm:
     def accept(cls) -> None:
         name = cls.name_input.text().strip()
         author = cls.author_input.text().strip()
+        website = cls.website_input.text().strip()
         if not name:
             alert("Error:Empty", "Blog's name is empty", Icon.Critical)
             return
         if not author:
             alert("Error:Empty", "Author is empty", Icon.Critical)
             return
+
+        if (
+            name != cls.blog_cfg.name
+            or author != cls.blog_cfg.author
+            or website != cls.blog_cfg.website
+        ):
+            cls.blog_cfg.updated = model.now()
+
+        if website != cls.blog_cfg.website:
+            if not website.endswith("/"):
+                website += "/"
+            cls.blog_cfg.website = website
+            cls.blog_cfg.feed_link = website+model.atom_xml
+
         cls.blog_cfg.name = name
         cls.blog_cfg.author = author
         cls.blog_cfg.home_recent_max = cls.recent_max_input.value()

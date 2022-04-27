@@ -19,6 +19,8 @@ def show_cfg(conn: Conn, cfg: BlogConfig | None = None) -> None:
         f"\n    [Root Folder] {db.cwd}"
         f"\n    [Blog's name] {cfg.name}"
         f"\n         [Author] {cfg.author}"
+        f"\n        [Website] {cfg.website}"
+        f"\n      [feed_link] {cfg.feed_link}"
         f"\n[home_recent_max] {cfg.home_recent_max}"
     )
     print()
@@ -55,14 +57,14 @@ def init_blog(blog_name: str, author: str) -> None:
         print()
         return
 
-    db.drafts_dir.mkdir()
-    db.posted_dir.mkdir()
-    db.output_dir.mkdir()
-    copy_tmpl_files()
-
     with db.connect() as conn:
         conn.executescript(stmt.Create_tables)
-        db.init_cfg(conn, BlogConfig(blog_name, author))
+        feed_uuid = model.feed_uuid(blog_name)
+        db.init_cfg(conn, BlogConfig(blog_name, author, feed_uuid))
+        db.drafts_dir.mkdir()
+        db.posted_dir.mkdir()
+        db.output_dir.mkdir()
+        copy_tmpl_files()
         show_cfg(conn)
 
 
@@ -88,6 +90,7 @@ def post_article(
 ) -> None:
     with db.connect() as conn:
         db.insert_article(conn, article, tags)
+        db.update_cfg_now(conn)
 
     dst_dir = db.posted_dir.joinpath(article.published[:4])
     dst_dir.mkdir(exist_ok=True)

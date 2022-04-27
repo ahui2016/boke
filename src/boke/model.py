@@ -3,6 +3,7 @@ import re
 from typing import Final, TypedDict
 from random import randrange
 import arrow
+import hashlib
 from result import Err, Ok, Result
 
 
@@ -28,11 +29,39 @@ MD_TitlePattern: Final = re.compile(r"^(#{1,6}|>|1.|-|\*) (.+)")
 Article_ID_ForbidPattern: Final = re.compile(r"[^_0-9a-zA-Z\-]")
 
 
+def now() -> str:
+    return arrow.now().format(RFC3339)
+
+
+def date_id() -> str:
+    """时间戳转base36"""
+    now = arrow.now().int_timestamp
+    return base_repr(now, 36)
+
+
+def rand_id(prefix: str) -> str:
+    """前缀 + 只有 3～4 个字符的随机字符串"""
+    n_min = int("100", 36)
+    n_max = int("zzzz", 36)
+    n_rand = randrange(n_min, n_max + 1)
+    return prefix + base_repr(n_rand, 36)
+
+
+def feed_uuid(blog_name: str) -> str:
+    return hashlib.sha1(
+        (blog_name + date_id() + rand_id("uuid")).encode()
+    ).hexdigest()
+
+
 @dataclass
 class BlogConfig:
     name: str  # 博客名称
     author: str  # 默认作者（每篇文章也可独立设定作者）
+    uuid: str  # 用于 RSS feed 的 uuid
+    website: str = ""  # 博客网址，用于 RSS feed
+    feed_link: str = ""  # RSS feed 的网址，根据 website 生成
     home_recent_max: int = 20  # 首页 "最近更新" 列表中的项目上限
+    updated: str = now()  # 更新日期
 
 
 @dataclass
@@ -93,10 +122,6 @@ class ArticlesInCat:
     articles: list[Article]
 
 
-def now() -> str:
-    return arrow.now().format(RFC3339)
-
-
 # https://github.com/numpy/numpy/blob/main/numpy/core/numeric.py
 def base_repr(number: int, base: int = 10, padding: int = 0) -> str:
     """
@@ -118,20 +143,6 @@ def base_repr(number: int, base: int = 10, padding: int = 0) -> str:
     if number < 0:
         res.append("-")
     return "".join(reversed(res or "0"))
-
-
-def date_id() -> str:
-    """时间戳转base36"""
-    now = arrow.now().int_timestamp
-    return base_repr(now, 36)
-
-
-def rand_id(prefix: str) -> str:
-    """前缀 + 只有 3～4 个字符的随机字符串"""
-    n_min = int("100", 36)
-    n_max = int("zzzz", 36)
-    n_rand = randrange(n_min, n_max + 1)
-    return prefix + base_repr(n_rand, 36)
 
 
 def byte_len(s: str) -> int:

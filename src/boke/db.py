@@ -74,6 +74,12 @@ def update_cfg(conn: Conn, cfg: BlogConfig) -> None:
     ).unwrap()
 
 
+def update_cfg_now(conn: Conn) -> None:
+    cfg = get_cfg(conn).unwrap()
+    cfg.updated = model.now()
+    update_cfg(conn, cfg)
+
+
 def init_cfg(conn: Conn, cfg: BlogConfig) -> None:
     if get_cfg(conn).is_err():
         connUpdate(
