@@ -120,7 +120,7 @@ def show_article_info(
 def show_article_info_by_id(conn: Conn, article_id: str) -> None:
     article = db.get_article(conn, article_id)
     cat = db.fetchone(conn, stmt.Get_cat_name, (article.cat_id,))
-    tags = db.get_tags_by_article(conn, article_id)
+    tags = db.get_tag_names(conn, article_id)
     cfg = db.get_cfg(conn).unwrap()
     show_article_info(article, cat, tags, cfg)
 
@@ -162,7 +162,7 @@ def not_in_posted(src_file: Path, article_id: str, published: str) -> bool:
 
 
 def update_tags(conn: Conn, article_id: str, new_tags: list[str]) -> None:
-    old_tags = db.get_tags_by_article(conn, article_id)
+    old_tags = db.get_tag_names(conn, article_id)
     diff_tags = model.tags_diff(new_tags, old_tags)
     db.insert_tags(conn, diff_tags["to_add"], article_id)
     db.delete_tags(conn, article_id, diff_tags["to_del"])

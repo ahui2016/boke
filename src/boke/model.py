@@ -22,8 +22,11 @@ html_suffix: Final = ".html"
 md_suffix: Final = ".md"
 atom_xml: Final = "atom.xml"
 
-ArticleTitleLimit: Final = 192  # 文章标题长度上限
-Article_ID_Limit: Final = 64  # 文章 ID 长度上限（该 ID 同时也是文件名）
+ArticleTitleLimit: Final = 192  # (单位:byte) 文章标题长度上限
+Article_ID_Limit: Final = 64  # (单位:byte) 文章 ID 长度上限（该 ID 同时也是文件名）
+
+FeedItemsLimit: Final = 10  # RSS feed 一共包含多少篇最新文章
+ContentSizeLimit: Final = 256  # (单位: 字符) RSS feed 中每篇文章内容字数上限
 
 MD_TitlePattern: Final = re.compile(r"^(#{1,6}|>|1.|-|\*) (.+)")
 Article_ID_ForbidPattern: Final = re.compile(r"[^_0-9a-zA-Z\-]")
@@ -61,7 +64,8 @@ class BlogConfig:
     website: str = ""  # 博客网址，用于 RSS feed
     feed_link: str = ""  # RSS feed 的网址，根据 website 生成
     home_recent_max: int = 20  # 首页 "最近更新" 列表中的项目上限
-    updated: str = now()  # 更新日期
+    updated: str = now()  # 更新日期，如果大于 feed_last_pub 就需要生新生成 RSS
+    feed_last_pub: str = ""  # 上次生成 RSS feed 的时间
 
 
 @dataclass

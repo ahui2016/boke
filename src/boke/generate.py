@@ -26,6 +26,7 @@ tmplfile: Final = dict(
     cat="cat.html",
     article="article.html",
     tag="tag.html",
+    rss=model.atom_xml,
 )
 
 
@@ -44,6 +45,14 @@ def copy_theme(theme: str) -> None:
     src = db.templates_dir.joinpath(model.Themes_folder_name, filename)
     dst = db.output_dir.joinpath("theme.css")
     shutil.copyfile(src, dst)
+
+
+def render_write_rss(blog: model.BlogConfig, entries: list) -> None:
+    tmpl = jinja_env.get_template(tmplfile["rss"])
+    rss = tmpl.render(dict(blog=blog, entries=entries))
+    output = db.output_dir.joinpath(model.atom_xml)
+    print(f"render and write {output}")
+    output.write_text(rss, encoding="utf-8")
 
 
 def render_write_index(
@@ -88,7 +97,6 @@ def render_write_tag(
 def render_write_article(
     blog: model.BlogConfig,
     cat: model.Category,
-    tags: list[model.Tag],
     article: model.Article,
 ) -> None:
     src_file = db.posted_file_path(article.id, article.published)
@@ -98,6 +106,7 @@ def render_write_article(
 
     art = asdict(article)
     art["content"] = md_render(src_file.read_text(encoding="utf-8"))
+    tags = db.execute(db.get_tags_by_article, article.id)
 
     tmpl = jinja_env.get_template(tmplfile["article"])
     html = tmpl.render(
@@ -124,6 +133,19 @@ def set_cat_name(
     return arts
 
 
+def set_art_content(articles: list[model.Article]) -> list:
+    arts = []
+    for i, art in enumerate(articles):
+        art_file = db.posted_file_path(art.id, art.published)
+        content = art_file.read_text(encoding="utf-8")
+        if len(content) > model.ContentSizeLimit:
+            content = content[: model.ContentSizeLimit] + "..."
+        art_dict = asdict(art)
+        art_dict["content"] = content
+        arts.append(art_dict)
+    return arts
+
+
 def generate_html(conn: Conn, cfg: model.BlogConfig, force_all: bool) -> None:
     """如果 force_all is True, 就强制重新生成全部文章。
     如果 force_all is False, 则只生成新文章与有更新的文章。
@@ -140,13 +162,24 @@ def generate_html(conn: Conn, cfg: model.BlogConfig, force_all: bool) -> None:
         cat.notes = ""  # 后续不需要用到 cat.notes
         for article in articles:
             if force_all is True or article.updated > article.last_pub:
-                render_write_article(cfg, cat, tags, article)
+                render_write_article(cfg, cat, article)
                 db.update_last_pub(conn, article.id)
 
     articles = db.get_recent_articles(conn, cfg.home_recent_max)
     arts = set_cat_name(cat_list, articles)
 
     render_write_index(cfg, cat_list, tags, arts)
+
+
+def generate_rss(conn: Conn, cfg: model.BlogConfig, force: bool) -> None:
+    if not force and cfg.feed_last_pub > cfg.updated:
+        return
+
+    articles = db.get_recent_articles(conn, model.FeedItemsLimit)
+    arts = set_art_content(articles)
+    render_write_rss(cfg, arts)
+    cfg.feed_last_pub = model.now()
+    db.update_cfg(conn, cfg)
 
 
 def generate_all(
@@ -156,6 +189,7 @@ def generate_all(
     if theme != "unchanged":
         copy_theme(theme)
     generate_html(conn, cfg, force_all)
+    generate_rss(conn, cfg, force_all)
     if not ignore_assets:
         copy_static_files()
     print("OK. (完成)")

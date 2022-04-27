@@ -44,7 +44,8 @@ CREATE TABLE IF NOT EXISTS tag_article
 
 CREATE INDEX IF NOT EXISTS idx_tag_article_tag ON tag_article(tag_id);
 CREATE INDEX IF NOT EXISTS idx_tag_article_article ON tag_article(article_id);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_tag_article ON tag_article(tag_id, article_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_tag_article
+    ON tag_article(tag_id, article_id);
 """
 
 Insert_metadata: Final = (
@@ -52,6 +53,7 @@ Insert_metadata: Final = (
 )
 Get_metadata: Final = "SELECT value FROM metadata WHERE name=?;"
 Update_metadata: Final = "UPDATE metadata SET value=:value WHERE name=:name;"
+
 
 Get_all_cats: Final = """
     SELECT * FROM category;
@@ -86,11 +88,16 @@ Get_article: Final = """
     """
 
 Get_all_tags: Final = """
-    SELECT * FROM tag; 
+    SELECT * FROM tag;
+    """
+
+Get_tag_names: Final = """
+    SELECT tag.name FROM tag_article, tag
+    WHERE tag_article.tag_id=tag.id and article_id=?;
     """
 
 Get_tags_by_article: Final = """
-    SELECT tag.name FROM tag_article, tag
+    SELECT tag.id, tag.name FROM tag_article, tag
     WHERE tag_article.tag_id=tag.id and article_id=?;
     """
 
@@ -127,7 +134,8 @@ Insert_tag: Final = """
     """
 
 Insert_article: Final = """
-    INSERT INTO article (id, cat_id, title, author, published, updated, last_pub)
+    INSERT INTO article (
+             id,  cat_id,  title,  author,  published,  updated,  last_pub)
     VALUES (:id, :cat_id, :title, :author, :published, :updated, :last_pub);
     """
 
@@ -149,8 +157,9 @@ Update_article_date: Final = """
     """
 
 Update_article: Final = """
-    UPDATE article
-    SET id=:new_id, cat_id=:cat_id, title=:title, author=:author, updated=:updated
+    UPDATE article SET
+        id=:new_id,   cat_id=:cat_id,
+        title=:title, author=:author, updated=:updated
     WHERE id=:id;
     """
 

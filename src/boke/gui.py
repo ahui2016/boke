@@ -188,7 +188,7 @@ class UpdateBlogForm:
             if not website.endswith("/"):
                 website += "/"
             cls.blog_cfg.website = website
-            cls.blog_cfg.feed_link = website+model.atom_xml
+            cls.blog_cfg.feed_link = website + model.atom_xml
 
         cls.blog_cfg.name = name
         cls.blog_cfg.author = author
@@ -581,7 +581,7 @@ class UpdateForm(PostForm):
         with db.connect() as conn:
             article = db.get_article(conn, cls.article_id)
             cat = db.fetchone(conn, stmt.Get_cat_name, (article.cat_id,))
-            tags = db.get_tags_by_article(conn, cls.article_id)
+            tags = db.get_tag_names(conn, cls.article_id)
             cls.published = article.published
             cls.last_pub = article.last_pub
 

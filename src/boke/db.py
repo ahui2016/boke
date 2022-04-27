@@ -125,9 +125,14 @@ def get_article(conn: Conn, article_id: str) -> model.Article:
     return model.new_article_from(row)
 
 
+def get_tag_names(conn: Conn, article_id: str) -> list[str]:
+    rows = conn.execute(stmt.Get_tag_names, (article_id,)).fetchall()
+    return [row[0] for row in rows]
+
+
 def get_tags_by_article(conn: Conn, article_id: str) -> list[str]:
     rows = conn.execute(stmt.Get_tags_by_article, (article_id,)).fetchall()
-    return [row[0] for row in rows]
+    return [model.new_tag_from(row) for row in rows]
 
 
 def count_articles_by_tag(conn: Conn, tag_name: str) -> int:
@@ -184,7 +189,7 @@ def insert_tags(conn: Conn, tags: list[str], article_id: str) -> None:
     for tag_name in tags:
         tag_id = conn.execute(stmt.Get_tag_id, (tag_name,)).fetchone()
         if not tag_id:
-            tag = model.new_tag_from({"name": tag_name})
+            tag = model.new_tag_from({"id": "", "name": tag_name})
             tag_ids.append(tag.id)
             connUpdate(conn, stmt.Insert_tag, asdict(tag)).unwrap()
         else:

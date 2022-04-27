@@ -4,16 +4,20 @@
   <title>{{ blog.name }}</title>
   <link ref="self" href="{{ blog.feed_link }}"/>
   <link ref="alternate" href="{{ blog.website }}"/>
-  <updated>{{ feed.updated }}</updated>
+  <updated>{{ blog.updated }}</updated>
   <author>
-    <name>{{ feed.author }}</name>
+    <name>{{ blog.author }}</name>
   </author>
   <id>{{ blog.uuid }}</id>
 
   {% for item in entries %}
   <entry>
-    <id>{{ item.entry_id }}-{{ item.published }}</id>
+    <title>{{ item.title }}</title>
+    <link ref="alternate" href="{{ blog.website + item.published[:4] + '/' + item.id + '.html'}}" />
+    <id>{{ blog.website }}/{{ item.id }}</id>
     <published>{{ item.published }}</published>
+    <updated>{{ item.updated }}</updated>
+    <author><name>{{ item.author }}</name></author>
     <content type="text">{{ item.content }}</content>
   </entry>
   {% endfor %}
