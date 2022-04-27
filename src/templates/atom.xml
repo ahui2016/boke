@@ -17,7 +17,13 @@
     <id>{{ blog.website }}/{{ item.id }}</id>
     <published>{{ item.published }}</published>
     <updated>{{ item.updated }}</updated>
-    <author><name>{{ item.author }}</name></author>
+    <author><name>
+      {%- if item.author|length -%}
+        {{ item.author }}
+      {%- else -%}
+        {{ blog.author }}
+      {%- endif -%}
+    </name></author>
     <content type="text">{{ item.content }}</content>
   </entry>
   {% endfor %}
