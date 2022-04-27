@@ -115,19 +115,35 @@ class UpdateBlogForm:
         grid = QtWidgets.QGridLayout()
         vbox.addLayout(grid)
 
+        row = 0
         name_label = QtWidgets.QLabel("Blog's name")
         cls.name_input = QtWidgets.QLineEdit()
         cls.name_input.setText(cls.blog_cfg.name)
+        cls.name_input.setToolTip("博客名称")
         name_label.setBuddy(cls.name_input)
-        grid.addWidget(name_label, 0, 0)
-        grid.addWidget(cls.name_input, 0, 1)
+        grid.addWidget(name_label, row, 0)
+        grid.addWidget(cls.name_input, row, 1)
 
+        row += 1
         author_label = QtWidgets.QLabel("Author")
         cls.author_input = QtWidgets.QLineEdit()
         cls.author_input.setText(cls.blog_cfg.author)
+        cls.author_input.setToolTip("默认作者")
         author_label.setBuddy(cls.author_input)
-        grid.addWidget(author_label, 1, 0)
-        grid.addWidget(cls.author_input, 1, 1)
+        grid.addWidget(author_label, row, 0)
+        grid.addWidget(cls.author_input, row, 1)
+
+        row += 1
+        tips = "首页最近更新列表上限"
+        recent_max_label = QtWidgets.QLabel("recent_max")
+        cls.recent_max_input = QtWidgets.QSpinBox()
+        cls.recent_max_input.setValue(cls.blog_cfg.home_recent_max)
+        cls.recent_max_input.setRange(1, 1000)
+        recent_max_label.setBuddy(cls.recent_max_input)
+        recent_max_label.setToolTip(tips)
+        cls.recent_max_input.setToolTip(tips)
+        grid.addWidget(recent_max_label, row, 0)
+        grid.addWidget(cls.recent_max_input, row, 1)
 
         cls.buttonBox = ButtonBox(
             ButtonBox.Ok | ButtonBox.Cancel,  # type: ignore
@@ -141,8 +157,17 @@ class UpdateBlogForm:
 
     @classmethod
     def accept(cls) -> None:
-        cls.blog_cfg.name = cls.name_input.text().strip()
-        cls.blog_cfg.author = cls.author_input.text().strip()
+        name = cls.name_input.text().strip()
+        author = cls.author_input.text().strip()
+        if not name:
+            alert("Error:Empty", "Blog's name is empty", Icon.Critical)
+            return
+        if not author:
+            alert("Error:Empty", "Author is empty", Icon.Critical)
+            return
+        cls.blog_cfg.name = name
+        cls.blog_cfg.author = author
+        cls.blog_cfg.home_recent_max = cls.recent_max_input.value()
         with db.connect() as conn:
             db.update_cfg(conn, cls.blog_cfg)
             util.show_cfg(conn)
