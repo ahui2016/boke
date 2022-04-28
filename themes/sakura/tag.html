@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title%}
+  <title>{{ tag.name }} - {{ blog.name }}</title>
+{% endblock %}
+
+{% block main %}
+<div class="text-right"><a href="index.html">&lt;&lt; Home</a></div>
+<h2>{{ tag.name }}</h2>
+<ul>
+  {% for art in articles %}
+  <li>{{ art.published[:10] }} <a href="{{art.published[:4]}}/{{art.id}}.html">{{art.title}}</a></li>
+  {% endfor %}
+</ul>
+{% endblock %}

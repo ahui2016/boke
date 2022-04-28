@@ -4,24 +4,39 @@
   <title>{{ art.title }} - {{ blog.name }}</title>
 {% endblock %}
 
+{% block header %}
+{% endblock %}
+
 {% block main %}
-  {{ art.content|safe }}
-  <div class="footer">
-    <div class="nav-buttons">
-      <a href="../index.html">&lt;&lt; Home</a>
-      <br>
-      <a href="../{{cat.id}}.html">&lt;&lt; Category ({{ cat.name }})</a>
-    </div>
-    <div class="author-date">
-      {% if art.author|length %}
-      <span>Author: {{ art.author }}</span>
-      {% else %}
-      <span>Author: {{ blog.author }}</span>
-      {% endif %}
-      <br>
-      <span>Updated at {{ art.updated[:10] }}</span>
-    </div>
+
+{{ art.content|safe }}
+
+<div class="art-info">
+  <div>Article ID: {{ art.id }}</div>
+  <div class="Tags">
+  Tags:
+  {% for tag in tags %}
+  <a href="../{{tag.id}}.html">{{tag.name}}</a>
+  {% endfor %}
   </div>
+</div>
+
+<div class="footer">
+  <div class="nav-buttons">
+    <a href="../index.html">&lt;&lt; Home</a>
+    <br>
+    <a href="../{{cat.id}}.html">&lt;&lt; Category ({{ cat.name }})</a>
+  </div>
+  <div class="author-date">
+    {% if art.author|length %}
+    <span>Author: {{ art.author }}</span>
+    {% else %}
+    <span>Author: {{ blog.author }}</span>
+    {% endif %}
+    <br>
+    <span>Updated at {{ art.updated[:10] }}</span>
+  </div>
+</div>
 {% endblock %}
 
 {% block footer %}

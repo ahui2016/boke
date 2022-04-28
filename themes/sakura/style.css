@@ -1,3 +1,7 @@
+header {
+  text-align: center;
+}
+
 a {
   text-decoration: none;
 }
@@ -12,6 +16,9 @@ img {
 }
 .text-center {
   text-align: center;
+}
+.text-right {
+  text-align: right;
 }
 
 .FeedInfo {
@@ -40,10 +47,21 @@ img {
   margin-left: 1rem;
 }
 
+.Tags,
+.Categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1rem;
+}
+
+.art-info {
+  font-size: small;
+  margin-top: 5rem;
+}
 .footer {
   display: flex;
   justify-content: space-between;
-  margin-top: 5rem;
+  margin-top: 1.5rem;
   /* margin-bottom: 5rem; */
   padding-top: 1.5rem;
   border-top: 1px solid #ccc;
@@ -56,8 +74,8 @@ img {
 footer {
   text-align: center;
   font-size: small;
-  margin-top: 3rem;
-  margin-bottom: 1.5rem;
+  margin-top: 3rem; 
+  margin-bottom: 1.5rem; 
   padding-top: 1.5rem;
   border-top: 1px solid #ccc;
 }

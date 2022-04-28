@@ -1,12 +1,33 @@
 {% extends "base.html" %}
 
 {% block main %}
-  {% for item in cats %}
-  <h3>{{ item.cat.name }}</h3>
-  <ul>
-    {% for art in item.articles %}
-    <li>{{ art.published[:10] }} <a href="{{art.published[:4]}}/{{art.id}}.html">{{art.title}}</a></li>
-    {% endfor %}
-  </ul>
+<header>
+  <h1>{{ blog.name }}</h1>
+</header>
+
+<h3>Recent articles</h3>
+<ul>
+  {% for art in articles %}
+  <li>{{ art.published[:10] }} [{{ art.cat_name }}]
+    <a href="{{art.published[:4]}}/{{art.id}}.html">{{art.title}}</a></li>
   {% endfor %}
+</ul>
+
+<h3>Categories</h3>
+<div class="Categories">
+  {% for cat in cats %}
+  <a href="{{cat.id}}.html">{{cat.name}}</a>
+  {% endfor %}
+</div>
+
+<h3>Tags</h3>
+<div class="Tags">
+  {% for tag in tags %}
+  <a href="{{tag.id}}.html">{{tag.name}}</a>
+  {% endfor %}
+</div>
+{% endblock %}
+
+{% block footer %}
+<footer>Copyright &copy; 2020-2022 Your name or Your company. All Rights Reserved.</footer>
 {% endblock %}
