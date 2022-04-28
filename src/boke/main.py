@@ -136,23 +136,22 @@ def post(ctx: click.Context, filename: os.PathLike):
     help="Set the CSS style theme.",
 )
 @click.option(
-    "ignore_assets",
-    "-ia",
-    "--ignore-assets",
+    "copy_assets",
+    "--copy-assets",
     is_flag=True,
     default=False,
-    help="Do not copy assets (e.g. CSS, LICENSE)",
+    help="Copy all assets (e.g. CSS, LICENSE)",
 )
 @click.option(
     "force_all",
     "-all",
-    "--force-all",
+    "--all-articles",
     is_flag=True,
     default=False,
     help="Force to re-generate all articles.",
 )
 @click.pass_context
-def gen(ctx: click.Context, theme: str, ignore_assets: bool, force_all: bool):
+def gen(ctx: click.Context, theme: str, copy_assets: bool, force_all: bool):
     """Generate your articles to HTML/RSS.
 
     生成 HTML 与 RSS 静态文件
@@ -164,7 +163,7 @@ def gen(ctx: click.Context, theme: str, ignore_assets: bool, force_all: bool):
         ctx.exit()
 
     with db.connect() as conn:
-        generate_all(conn, theme.lower(), ignore_assets, force_all)
+        generate_all(conn, theme.lower(), copy_assets, force_all)
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
