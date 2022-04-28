@@ -110,6 +110,7 @@ def show_article_info(
         f" [Category] {cat}\n"
         f"[published] {article.published}\n"
         f"  [updated] {article.updated}\n"
+        f"   [hidden] {article.hidden}\n"
     )
     if tags:
         tags_preview = "  #".join(tags)

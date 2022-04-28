@@ -102,13 +102,20 @@ Get_tags_by_article: Final = """
     WHERE tag_article.tag_id=tag.id and article_id=?;
     """
 
-Get_articles_by_tag = """
-    SELECT article_id FROM tag_article, tag
+Count_articles_by_tag: Final = """
+    SELECT count(*) FROM tag_article, tag
     WHERE tag_article.tag_id=tag.id and tag.name=?;
     """
 
-Get_recent_articles = """
-    SELECT * FROM article ORDER BY published DESC LIMIT ?;
+Get_articles_by_tag: Final = """
+    SELECT * FROM article WHERE hidden=0 and id=(
+        SELECT article_id FROM tag_article, tag
+        WHERE tag_article.tag_id=tag.id and tag.name=?
+    );
+    """
+
+Get_recent_articles: Final = """
+    SELECT * FROM article WHERE hidden=0 ORDER BY published DESC LIMIT ?;
     """
 
 Article_id: Final = """
@@ -136,8 +143,9 @@ Insert_tag: Final = """
 
 Insert_article: Final = """
     INSERT INTO article (
-             id,  cat_id,  title,  author,  published,  updated,  last_pub)
-    VALUES (:id, :cat_id, :title, :author, :published, :updated, :last_pub);
+       id,  cat_id,  title,  author,  published,  hidden,  updated,  last_pub)
+    VALUES (
+      :id, :cat_id, :title, :author, :published, :hidden, :updated, :last_pub);
     """
 
 Insert_tag_article: Final = """
@@ -159,8 +167,8 @@ Update_article_date: Final = """
 
 Update_article: Final = """
     UPDATE article SET
-        id=:new_id,   cat_id=:cat_id,
-        title=:title, author=:author, updated=:updated
+        id=:new_id,     cat_id=:cat_id,   title=:title,
+        author=:author, updated=:updated, hidden=:hidden
     WHERE id=:id;
     """
 

@@ -136,16 +136,22 @@ def get_tags_by_article(conn: Conn, article_id: str) -> list[str]:
 
 
 def count_articles_by_tag(conn: Conn, tag_name: str) -> int:
+    return fetchone(conn, stmt.Count_articles_by_tag, (tag_name,))
+
+
+def get_articles_by_tag(conn: Conn, tag_name: str) -> list[model.Article]:
     rows = conn.execute(stmt.Get_articles_by_tag, (tag_name,)).fetchall()
-    return len(rows)
+    return [model.new_article_from(row) for row in rows]
 
 
+"""
 def get_articles_by_tag(conn: Conn, tag_name: str) -> list[model.Article]:
     rows = conn.execute(stmt.Get_articles_by_tag, (tag_name,)).fetchall()
     articles = []
     for row in rows:
         articles.append(get_article(conn, row[0]))
     return articles
+"""
 
 
 def get_cat(conn: Conn, cat_id: str) -> model.Category | None:

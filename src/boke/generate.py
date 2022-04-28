@@ -1,3 +1,4 @@
+import os
 from dataclasses import asdict
 import shutil
 import jinja2
@@ -94,11 +95,19 @@ def render_write_tag(
     output.write_text(html, encoding="utf-8")
 
 
-def remove_hidden_article(art_id: str) -> None:
+def remove_hidden_article(article: model.Article) -> None:
     dst_dir = db.output_dir.joinpath(article.published[:4])
     dst_file = dst_dir.joinpath(article.id + model.html_suffix)
     if dst_file.exists():
+        print(f"REMOVE {dst_file}")
         os.remove(dst_file)
+
+
+def remove_empty_item(item_id: str, item_name: str) -> None:
+    f = db.output_dir.joinpath(item_id + model.html_suffix)
+    if f.exists():
+        print(f"REMOVE ({item_name}) {f}")
+        os.remove(f)
 
 
 def render_write_article(
@@ -111,6 +120,7 @@ def render_write_article(
     dst_dir.mkdir(exist_ok=True)
     dst_file = dst_dir.joinpath(article.id + model.html_suffix)
 
+    cat.notes = ""
     art = asdict(article)
     art["content"] = md_render(src_file.read_text(encoding="utf-8"))
     tags = db.execute(db.get_tags_by_article, article.id)
@@ -158,26 +168,37 @@ def generate_html(conn: Conn, cfg: model.BlogConfig, force_all: bool) -> None:
     如果 force_all is False, 则只生成新文章与有更新的文章。
     """
     tags = db.get_all_tags(conn)
+    tags_has_arts = []
     for tag in tags:
         articles = db.get_articles_by_tag(conn, tag.name)
-        render_write_tag(cfg, tag, articles)
+        if len(articles) > 0:
+            render_write_tag(cfg, tag, articles)
+            tags_has_arts.append(tag)
+        else:
+            remove_empty_item(tag.id, tag.name)
 
     cat_list = db.get_all_cats(conn)
+    cats_has_arts = []
     for cat in cat_list:
         articles = db.get_articles_by_cat(conn, cat.id)
-        render_write_cat(cfg, cat, articles)
-        cat.notes = ""  # 后续不需要用到 cat.notes
+        arts = []
         for article in articles:
             if article.hidden:
-                remove_hidden_article(article.id)
+                remove_hidden_article(article)
             elif force_all is True or article.updated > article.last_pub:
+                arts.append(article)
                 render_write_article(cfg, cat, article)
                 db.update_last_pub(conn, article.id)
 
-    articles = db.get_recent_articles(conn, cfg.home_recent_max)
-    arts = set_cat_name(cat_list, articles)
+        if len(arts) > 0:
+            render_write_cat(cfg, cat, arts)
+            cats_has_arts.append(cat)
+        else:
+            remove_empty_item(cat.id, cat.name)
 
-    render_write_index(cfg, cat_list, tags, arts)
+    articles = db.get_recent_articles(conn, cfg.home_recent_max)
+    recent_arts = set_cat_name(cat_list, articles)
+    render_write_index(cfg, cats_has_arts, tags_has_arts, recent_arts)
 
 
 def generate_rss(conn: Conn, cfg: model.BlogConfig, force: bool) -> None:

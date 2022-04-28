@@ -76,6 +76,7 @@ class Category:
 
 
 def new_cat_from(row: dict) -> Category:
+    row = dict(row)
     cat_id = row["id"] if row.get("id", "") else rand_id(cat_id_prefix)
     return Category(id=cat_id, name=row["name"], notes=row["notes"])
 
@@ -87,6 +88,7 @@ class Tag:
 
 
 def new_tag_from(row: dict) -> Tag:
+    row = dict(row)
     tag_id = row["id"] if row.get("id", "") else rand_id(tag_id_prefix)
     return Tag(id=tag_id, name=row["name"])
 
@@ -104,6 +106,7 @@ class Article:
 
 
 def new_article_from(row: dict) -> Article:
+    row = dict(row)
     article_id = row["id"] if row.get("id", "") else date_id()
     check_article_id(article_id).unwrap()
 
