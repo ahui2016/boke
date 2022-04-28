@@ -189,7 +189,7 @@ def insert_tags(conn: Conn, tags: list[str], article_id: str) -> None:
     for tag_name in tags:
         tag_id = conn.execute(stmt.Get_tag_id, (tag_name,)).fetchone()
         if not tag_id:
-            tag = model.new_tag_from({"id": "", "name": tag_name})
+            tag = model.new_tag_from({"name": tag_name})
             tag_ids.append(tag.id)
             connUpdate(conn, stmt.Insert_tag, asdict(tag)).unwrap()
         else:

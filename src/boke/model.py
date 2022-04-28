@@ -76,7 +76,7 @@ class Category:
 
 
 def new_cat_from(row: dict) -> Category:
-    cat_id = row["id"] if row["id"] else rand_id(cat_id_prefix)
+    cat_id = row["id"] if row.get("id", "") else rand_id(cat_id_prefix)
     return Category(id=cat_id, name=row["name"], notes=row["notes"])
 
 
@@ -87,7 +87,7 @@ class Tag:
 
 
 def new_tag_from(row: dict) -> Tag:
-    tag_id = row["id"] if row["id"] else rand_id(tag_id_prefix)
+    tag_id = row["id"] if row.get("id", "") else rand_id(tag_id_prefix)
     return Tag(id=tag_id, name=row["name"])
 
 
@@ -98,15 +98,16 @@ class Article:
     title: str
     author: str
     published: str
+    hidden: bool
     updated: str  # 最新修改时间, 如果大于 last_pub 就需要重新生成静态文件
     last_pub: str  # 上次生成静态文件的时间
 
 
 def new_article_from(row: dict) -> Article:
-    article_id = row["id"] if row["id"] else date_id()
+    article_id = row["id"] if row.get("id", "") else date_id()
     check_article_id(article_id).unwrap()
 
-    published = row["published"] if row["published"] else now()
+    published = row["published"] if row.get("published", "") else now()
     _ = arrow.get(published, RFC3339)
 
     return Article(
@@ -115,6 +116,7 @@ def new_article_from(row: dict) -> Article:
         title=row["title"],
         author=row["author"],
         published=published,
+        hidden=row["hidden"],
         updated=row["updated"],
         last_pub=row["last_pub"],
     )

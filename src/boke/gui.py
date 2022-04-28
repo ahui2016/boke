@@ -402,6 +402,16 @@ class ArticleForm:
         cls.tags_preview_btn.clicked.connect(cls.preview_tags)  # type: ignore
         grid.addWidget(cls.tags_preview_btn, row, 0)
 
+        row += 1
+        tips = "选中隐藏文章(不生成HTML)"
+        cls.hidden_label = QtWidgets.QLabel("&Hidden")
+        cls.hidden_input = QtWidgets.QCheckBox()
+        cls.hidden_label.setBuddy(cls.hidden_input)
+        cls.hidden_label.setToolTip(tips)
+        cls.hidden_input.setToolTip(tips)
+        grid.addWidget(cls.hidden_label, row, 0)
+        grid.addWidget(cls.hidden_input, row, 1)
+
         cls.buttonBox = ButtonBox(
             ButtonBox.Ok | ButtonBox.Cancel,  # type: ignore
             orientation=Qt.Horizontal,
@@ -546,6 +556,11 @@ class PostForm(ArticleForm):
             case Ok(items):
                 tags = items
 
+        # 是否隐藏文章
+        hidden = False
+        if cls.hidden_input.checkState() == Qt.Checked:
+            hidden = True
+
         # 如果作者就是默认作者，那么，在数据库里 author 就是空字符串。
         author = cls.author_input.text().strip()
         if author == cls.blog_cfg.author:
@@ -557,6 +572,7 @@ class PostForm(ArticleForm):
                 title=cls.article_title,
                 author=author,
                 published=published,
+                hidden=hidden,
                 updated=published,
                 last_pub="",
             )
@@ -584,6 +600,7 @@ class UpdateForm(PostForm):
             tags = db.get_tag_names(conn, cls.article_id)
             cls.published = article.published
             cls.last_pub = article.last_pub
+            cls.hidden = article.hidden
 
         # 只能更新 posted 文件夹里的文件
         if util.not_in_posted(cls.src_file, cls.article_id, cls.published):
@@ -613,6 +630,10 @@ class UpdateForm(PostForm):
 
         # 标签
         cls.tags_input.setPlainText(", ".join(tags))
+
+        # 隐藏文章
+        if cls.hidden:
+            cls.hidden_input.setCheckState(Qt.Checked)
 
         # submit button
         cls.buttonBox.button(ButtonBox.Ok).setText("Update")
@@ -669,6 +690,11 @@ class UpdateForm(PostForm):
             case Ok(items):
                 tags = items
 
+        # 是否隐藏文章
+        hidden = False
+        if cls.hidden_input.checkState() == Qt.Checked:
+            hidden = True
+
         # 如果作者就是默认作者，那么，在数据库里 author 就是空字符串。
         author = cls.author_input.text().strip()
         if author == cls.blog_cfg.author:
@@ -681,6 +707,7 @@ class UpdateForm(PostForm):
             title=cls.article_title,
             author=author,
             updated=updated,
+            hidden=hidden,
         )
 
         # 更新数据库

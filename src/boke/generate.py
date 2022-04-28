@@ -94,6 +94,13 @@ def render_write_tag(
     output.write_text(html, encoding="utf-8")
 
 
+def remove_hidden_article(art_id: str) -> None:
+    dst_dir = db.output_dir.joinpath(article.published[:4])
+    dst_file = dst_dir.joinpath(article.id + model.html_suffix)
+    if dst_file.exists():
+        os.remove(dst_file)
+
+
 def render_write_article(
     blog: model.BlogConfig,
     cat: model.Category,
@@ -161,7 +168,9 @@ def generate_html(conn: Conn, cfg: model.BlogConfig, force_all: bool) -> None:
         render_write_cat(cfg, cat, articles)
         cat.notes = ""  # 后续不需要用到 cat.notes
         for article in articles:
-            if force_all is True or article.updated > article.last_pub:
+            if article.hidden:
+                remove_hidden_article(article.id)
+            elif force_all is True or article.updated > article.last_pub:
                 render_write_article(cfg, cat, article)
                 db.update_last_pub(conn, article.id)
 

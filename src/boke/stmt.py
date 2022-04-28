@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS article
     title       text   NOT NULL UNIQUE COLLATE NOCASE,
     author      text   NOT NULL,
     published   text   NOT NULL,
+    hidden      int    NOT NULL,
     updated     text   NOT NULL,
     last_pub    text   NOT NULL
 );
