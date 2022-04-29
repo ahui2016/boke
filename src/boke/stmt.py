@@ -137,6 +137,9 @@ Get_article_id_by_title: Final = """
 Tag_name: Final = """
     SELECT count(*) FROM tag WHERE name=?;
     """
+Get_tag_name: Final = """
+    SELECT name FROM tag WHERE id=?;
+    """
 Get_tag_id: Final = """
     SELECT id FROM tag WHERE name=?;
     """
@@ -144,6 +147,10 @@ Get_tag_id: Final = """
 Insert_tag: Final = """
     INSERT INTO tag (id, name) VALUES (:id, :name);
     """
+
+Rename_tag: Final = """
+    UPDATE tag SET name=:name WHERE id=:id;
+"""
 
 Insert_article: Final = """
     INSERT INTO article (

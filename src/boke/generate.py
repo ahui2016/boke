@@ -79,7 +79,7 @@ def render_write_cat(
         dict(blog=blog, cat=cat, articles=articles, parent_dir="")
     )
     output = db.output_dir.joinpath(
-        model.cat_id_prefix, cat.id + model.html_suffix
+        model.cat_id_prefix + cat.id + model.html_suffix
     )
     print(f"render and write ({cat.name}) {output}")
     output.write_text(html, encoding="utf-8")
@@ -93,7 +93,7 @@ def render_write_tag(
         dict(blog=blog, tag=tag, articles=articles, parent_dir="")
     )
     output = db.output_dir.joinpath(
-        model.tag_id_prefix, tag.id + model.html_suffix
+        model.tag_id_prefix + tag.id + model.html_suffix
     )
     print(f"render and write ({tag.name}) {output}")
     output.write_text(html, encoding="utf-8")
@@ -186,14 +186,21 @@ def generate_html(conn: Conn, cfg: model.BlogConfig, force_all: bool) -> None:
     for cat in cat_list:
         articles = db.get_articles_by_cat(conn, cat.id)
         arts = []
+
+        # 区分隐藏文章与公开文章
         for article in articles:
             if article.hidden:
                 remove_hidden_article(article)
-            elif force_all is True or article.updated > article.last_pub:
+            else:
                 arts.append(article)
+
+        # 区分是否生成文章
+        for art in arts:
+            if force_all is True or article.updated > article.last_pub:
                 render_write_article(cfg, cat, article)
                 db.update_last_pub(conn, article.id)
 
+        # 区分是否生成类别
         if len(arts) > 0:
             render_write_cat(cfg, cat, arts)
             cats_has_arts.append(cat)

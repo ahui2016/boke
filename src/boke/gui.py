@@ -1,5 +1,4 @@
 from pathlib import Path
-import re
 import sys
 from typing import Final, cast
 from PySide6 import QtWidgets
@@ -438,7 +437,7 @@ class ArticleForm:
 
     @classmethod
     def preview_tags(cls) -> None:
-        match extract_tags(cls.tags_input.toPlainText()):
+        match util.extract_tags(cls.tags_input.toPlainText()):
             case Err(e):
                 alert("Tags Error", e, Icon.Critical)
             case Ok(tags):
@@ -536,7 +535,7 @@ class PostForm(ArticleForm):
 
         # 检查标签
         tags = []
-        match extract_tags(cls.tags_input.toPlainText()):
+        match util.extract_tags(cls.tags_input.toPlainText()):
             case Err(e):
                 alert("Tags Error", e, Icon.Critical)
                 return
@@ -671,7 +670,7 @@ class UpdateForm(PostForm):
 
         # 检查标签
         tags = []
-        match extract_tags(cls.tags_input.toPlainText()):
+        match util.extract_tags(cls.tags_input.toPlainText()):
             case Err(e):
                 alert("Tags Error", e, Icon.Critical)
                 return
@@ -734,18 +733,3 @@ def alert(title: str, text: str, icon: Icon = Icon.Information) -> None:
     msgBox.setWindowTitle(title)
     msgBox.setText(text)
     msgBox.exec()
-
-
-def extract_tags(s: str) -> Result[list[str], str]:
-    sep_pattern: Final = re.compile(r"[#;,，；\s]")
-    forbid_pattern: Final = re.compile(
-        r"[\`\~\!\@\$\%\^\&\*\(\)\-\=\+\[\]\{\}\\\|\:\'\"\<\>\.\?\/]"
-    )
-
-    matched = forbid_pattern.search(s)
-    if matched is not None:
-        return Err(f"Forbidden character (标签不可包含): {matched.group(0)}")
-
-    tags = sep_pattern.split(s)
-    not_empty = [tag for tag in tags if tag]
-    return Ok(model.unique_str_list(not_empty))

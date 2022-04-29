@@ -1,4 +1,5 @@
 import os
+import re
 from pathlib import Path
 import shutil
 import sqlite3
@@ -177,3 +178,40 @@ def show_cats(conn: Conn, show_notes: bool) -> None:
             print("---------")
             print(f"{cat.notes}")
         print()
+
+
+def extract_tags(s: str) -> Result[list[str], str]:
+    sep_pattern = re.compile(r"[#;,，；\s]")
+    forbid_pattern = re.compile(
+        r"[\`\~\!\@\$\%\^\&\*\(\)\-\=\+\[\]\{\}\\\|\:\'\"\<\>\.\?\/]"
+    )
+
+    matched = forbid_pattern.search(s)
+    if matched is not None:
+        return Err(f"Forbidden character (标签不可包含): {matched.group(0)}")
+
+    tags = sep_pattern.split(s)
+    not_empty = [tag for tag in tags if tag]
+    return Ok(model.unique_str_list(not_empty))
+
+
+def get_tag_name(tag_text: str) -> Result[str, str]:
+    match extract_tags(tag_text):
+        case Err(err):
+            return Err(err)
+        case Ok(tags):
+            if not tags:
+                return Err(f"Not Valid (不是有效标签名): {tag_text}")
+            return db.rename_tag(tags[0])
+
+
+def rename_tag(conn: Conn, tag_text: str, old_name: str, tag_id: str) -> None:
+    match get_tag_name(tag_text):
+        case Err(e):
+            print(e)
+        case Ok(new_name):
+            match db.rename_tag(conn, new_name, tag_id):
+                case Err(e):
+                    print(e)
+                case Ok():
+                    print(f"{tag_id}: {old_name} --> {new_name}")

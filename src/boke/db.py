@@ -190,10 +190,21 @@ def update_cat(
     return Ok(name)
 
 
+def rename_tag(conn: Conn, new_name: str, tag_id: str) -> Result[str, str]:
+    try:
+        conn.execut(stmt.Rename_tag, dict(name=new_name, id=tag_id))
+    except Exception as e:
+        if "UNIQUE constraint failed" in str(e):
+            return Err(f"Tag Exists (标签已存在): {new_name}")
+        else:
+            raise
+    return Ok()
+
+
 def delete_cat(conn: Conn, cat_id: str) -> Result[str, str]:
     n = fetchone(conn, stmt.Count_articles_by_cat, (cat_id,))
     if n > 0:
-        return Err(f"有 {n} 篇文章与该类别关联，不可删除")
+        return Err(f"有 {n} 篇文章与该类别关联，不可删除。")
     return connUpdate(conn, stmt.Delete_cat, (cat_id,))
 
 
