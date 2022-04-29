@@ -64,10 +64,6 @@ Get_cat_id: Final = """
     SELECT id FROM category WHERE name=?;
     """
 
-Get_cat_name: Final = """
-    SELECT name FROM category WHERE id=?;
-    """
-
 Get_cat: Final = """
     SELECT * FROM category WHERE id=?;
     """
@@ -80,9 +76,17 @@ Update_cat: Final = """
     UPDATE category SET name=:name, notes=:notes WHERE id=:id;
     """
 
+Delete_cat: Final = """
+    DELETE FROM category WHERE id=?;
+"""
+
 Get_articles_by_cat: Final = """
     SELECT * FROM article WHERE cat_id=? ORDER BY published DESC;
     """
+
+Count_articles_by_cat: Final = """
+    SELECT count(*) FROM article WHERE cat_id=?;
+"""
 
 Get_article: Final = """
     SELECT * FROM article WHERE id=?;
@@ -111,7 +115,7 @@ Get_articles_by_tag: Final = """
     SELECT * FROM article WHERE hidden=0 and id=(
         SELECT article_id FROM tag_article, tag
         WHERE tag_article.tag_id=tag.id and tag.name=?
-    );
+    ) ORDER BY published DESC;
     """
 
 Get_recent_articles: Final = """

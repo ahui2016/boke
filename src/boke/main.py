@@ -221,8 +221,15 @@ def update(ctx: click.Context, filename: os.PathLike, date_only: bool):
     help="Show notes about every category.",
 )
 @click.argument("cat_id", nargs=1, required=False)
+@click.option("delete", "--delete", is_flag=True, help="Delete the category.")
 @click.pass_context
-def cat(ctx: click.Context, cat_list: bool, show_notes: bool, cat_id: str):
+def cat(
+    ctx: click.Context,
+    cat_list: bool,
+    show_notes: bool,
+    cat_id: str,
+    delete: bool,
+):
     """List out all categories, or modify a category.
 
     列出全部文章类别，或更改类别信息。
@@ -245,6 +252,23 @@ def cat(ctx: click.Context, cat_list: bool, show_notes: bool, cat_id: str):
             if len(cat_id) != 4:
                 print(f"id 错误（应由 4 个字符组成）: {cat_id}")
                 return
-            gui.CatForm.exec(cat_id)
+
+            if db.get_cat(conn, cat_id).err():
+                print(f"Not Found: {cat_id}")
+                print("（提示：可使用命令 'boke cat -l' 查看文章类别的 id）")
+                return
+
+            cat = db.get_cat(conn, cat_id).unwrap()
+
+            if delete:
+                print(f"{cat.id}: {cat.name}")
+                click.confirm("Confirm deletion (确认删除)", abort=True)
+                match db.delete_cat(conn, cat.id):
+                    case Err(e):
+                        print(e)
+                    case Ok():
+                        print("OK.")
+            else:
+                gui.CatForm.exec(cat)
         else:
             click.echo(ctx.get_help())

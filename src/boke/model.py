@@ -42,17 +42,17 @@ def date_id() -> str:
     return base_repr(now, 36)
 
 
-def rand_id(prefix: str) -> str:
+def rand_id() -> str:
     """前缀 + 只有 3～4 个字符的随机字符串"""
     n_min = int("100", 36)
     n_max = int("zzzz", 36)
     n_rand = randrange(n_min, n_max + 1)
-    return prefix + base_repr(n_rand, 36)
+    return base_repr(n_rand, 36)
 
 
 def feed_uuid(blog_name: str) -> str:
     return hashlib.sha1(
-        (blog_name + date_id() + rand_id("uuid")).encode()
+        (blog_name + date_id() + rand_id()).encode()
     ).hexdigest()
 
 
@@ -77,7 +77,7 @@ class Category:
 
 def new_cat_from(row: dict) -> Category:
     row = dict(row)
-    cat_id = row["id"] if row.get("id", "") else rand_id(cat_id_prefix)
+    cat_id = row["id"] if row.get("id", "") else rand_id()
     return Category(id=cat_id, name=row["name"], notes=row["notes"])
 
 
@@ -89,7 +89,7 @@ class Tag:
 
 def new_tag_from(row: dict) -> Tag:
     row = dict(row)
-    tag_id = row["id"] if row.get("id", "") else rand_id(tag_id_prefix)
+    tag_id = row["id"] if row.get("id", "") else rand_id()
     return Tag(id=tag_id, name=row["name"])
 
 

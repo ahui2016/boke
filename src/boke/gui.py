@@ -210,24 +210,13 @@ class UpdateBlogForm:
 # 这里 class 只是用来作为 namespace.
 class CatForm:
     @classmethod
-    def init(cls, cat_id: str) -> None:
-        cls.cat_id = cat_id
-        conn = db.connect()
-        cat = db.get_cat(conn, cat_id)
-        conn.close()
-        if not cat:
-            print(f"Not Found: {cat_id}")
-            print("（提示：可使用命令 'boke cat -l' 查看文章类别的 id）")
-            sys.exit()
-
+    def init(cls, cat: model.Category) -> None:
+        cls.cat = cat
         cls.form = QtWidgets.QDialog()
         cls.form.setWindowTitle("boke cat")
         cls.form.setStyleSheet(FormStyle)
-
         vbox = QtWidgets.QVBoxLayout(cls.form)
-
         vbox.addWidget(label_center("Category"))
-
         grid = QtWidgets.QGridLayout()
         vbox.addLayout(grid)
 
@@ -236,7 +225,7 @@ class CatForm:
         cls.id_label = QtWidgets.QLabel(item_name)
         cls.id_input = ReadonlyLineEdit(item_name)
         cls.id_input.clicked.connect(cls.click_readonly)
-        cls.id_input.setText(cat_id)
+        cls.id_input.setText(cat.id)
         cls.id_label.setBuddy(cls.id_input)
         grid.addWidget(cls.id_label, row, 0)
         grid.addWidget(cls.id_input, row, 1)
@@ -281,23 +270,22 @@ class CatForm:
         name = cls.name_input.text().strip()
         notes = cls.notes_input.toPlainText().strip()
         with db.connect() as conn:
-            err = db.update_cat(conn, name, notes, cls.cat_id).err()
-            if err:
-                alert("Name Error", err, Icon.Critical)
-                return
-
-        print(f"\n[id:{cls.cat_id}] {name}")
-        if notes:
-            print("---------")
-            print(f"{notes}")
-        print()
+            match db.update_cat(conn, name, notes, cls.cat.id):
+                case Err(err):
+                    alert("Name Error", err, Icon.Critical)
+                case Ok(cat_name):
+                    print(f"\n[id:{cls.cat.id}] {cat_name}")
+                    if notes:
+                        print("---------")
+                        print(f"{notes}")
+                    print()
         cls.form.close()
         # QtWidgets.QDialog.accept(cls.form) # 这句与 close() 的效果差不多。
 
     @classmethod
-    def exec(cls, cat_id: str) -> None:
+    def exec(cls, cat: model.Category) -> None:
         app = QtWidgets.QApplication(sys.argv)
-        cls.init(cat_id)
+        cls.init(cat)
         cls.form.show()
         app.exec()
 
@@ -464,14 +452,13 @@ class ArticleForm:
     @classmethod
     def insert_cat(cls, cat: str) -> None:
         r = db.execute(db.insert_cat, cat)
-        err = cast(Result[str, str], r).err()
-        if err:
-            alert("Category Error", err, Icon.Critical)
-            return
-
-        cls.cat_list.insertItem(0, cat)
-        cls.cat_list.setCurrentIndex(0)
-        cls.cat_index = 0
+        match cast(Result[str, str], r):
+            case Err(err):
+                alert("Category Error", err, Icon.Critical)
+            case Ok(cat_name):
+                cls.cat_list.insertItem(0, cat_name)
+                cls.cat_list.setCurrentIndex(0)
+                cls.cat_index = 0
 
     @classmethod
     def accept(cls) -> None:
@@ -592,11 +579,12 @@ class UpdateForm(PostForm):
         cls.title.setText("Update the article")
 
         cls.article_id = filename.stem
-        cat = ""
+        cat_name = ""
         tags = []
         with db.connect() as conn:
             article = db.get_article(conn, cls.article_id)
-            cat = db.fetchone(conn, stmt.Get_cat_name, (article.cat_id,))
+            cat = db.get_cat(conn, article.cat_id).unwrap()
+            cat_name = cat.name
             tags = db.get_tag_names(conn, cls.article_id)
             cls.published = article.published
             cls.last_pub = article.last_pub
@@ -620,7 +608,7 @@ class UpdateForm(PostForm):
         cls.author_input.setToolTip(author_tips)
 
         # 文章类别
-        cls.cat_index = cls.cats.index(cat)
+        cls.cat_index = cls.cats.index(cat_name)
         cls.cat_list.setCurrentIndex(cls.cat_index)
 
         # 更新日期

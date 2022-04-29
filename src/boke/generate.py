@@ -20,7 +20,7 @@ md_render: Final = mistune.create_markdown(
     plugins=["strikethrough", "footnotes", "table", "url"]
 )
 
-# 发布时，除了 template_files 之外, templates 文件夹里的全部文件都会被复制到 ouput 文件夹。
+# 发布时，除了 tmplfile 之外, templates 文件夹里的全部文件都会被复制到 ouput 文件夹。
 tmplfile: Final = dict(
     base="base.html",
     index="index.html",
@@ -78,7 +78,9 @@ def render_write_cat(
     html = tmpl.render(
         dict(blog=blog, cat=cat, articles=articles, parent_dir="")
     )
-    output = db.output_dir.joinpath(cat.id + model.html_suffix)
+    output = db.output_dir.joinpath(
+        model.cat_id_prefix, cat.id + model.html_suffix
+    )
     print(f"render and write ({cat.name}) {output}")
     output.write_text(html, encoding="utf-8")
 
@@ -90,7 +92,9 @@ def render_write_tag(
     html = tmpl.render(
         dict(blog=blog, tag=tag, articles=articles, parent_dir="")
     )
-    output = db.output_dir.joinpath(tag.id + model.html_suffix)
+    output = db.output_dir.joinpath(
+        model.tag_id_prefix, tag.id + model.html_suffix
+    )
     print(f"render and write ({tag.name}) {output}")
     output.write_text(html, encoding="utf-8")
 
@@ -213,7 +217,7 @@ def generate_rss(conn: Conn, cfg: model.BlogConfig, force: bool) -> None:
 
 
 def generate_all(
-    conn: Conn, theme: str, force_assets: bool, force_all: bool
+    conn: Conn, theme: str, copy_assets: bool, force_all: bool
 ) -> None:
     cfg = db.get_cfg(conn).unwrap()
     if theme != "unchanged":
@@ -221,6 +225,6 @@ def generate_all(
     generate_html(conn, cfg, force_all)
     generate_rss(conn, cfg, force_all)
 
-    if (not os.listdir(db.output_dir)) or force_assets:
+    if (not os.listdir(db.output_dir)) or copy_assets:
         copy_static_files()
     print("OK. (完成)")

@@ -120,10 +120,10 @@ def show_article_info(
 
 def show_article_info_by_id(conn: Conn, article_id: str) -> None:
     article = db.get_article(conn, article_id)
-    cat = db.fetchone(conn, stmt.Get_cat_name, (article.cat_id,))
+    cat = db.get_cat(conn, article.cat_id).unwrap()
     tags = db.get_tag_names(conn, article_id)
     cfg = db.get_cfg(conn).unwrap()
-    show_article_info(article, cat, tags, cfg)
+    show_article_info(article, cat.name, tags, cfg)
 
 
 def update_article_date(conn: Conn, article_id: str) -> None:

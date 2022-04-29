@@ -154,16 +154,17 @@ def get_articles_by_tag(conn: Conn, tag_name: str) -> list[model.Article]:
 """
 
 
-def get_cat(conn: Conn, cat_id: str) -> model.Category | None:
+def get_cat(conn: Conn, cat_id: str) -> Result[model.Category, str]:
     row = conn.execute(stmt.Get_cat, (cat_id,)).fetchone()
     if not row:
-        return None
-    return model.new_cat_from(row)
+        return Err(f"Not Found: {cat_id}")
+    return Ok(model.new_cat_from(row))
 
 
 def insert_cat(
     conn: Conn, name: str, notes: str = "", id: str = ""
 ) -> Result[str, str]:
+    name = name.replace(" ", "")
     cat = model.new_cat_from(dict(id=id, name=name, notes=notes))
     try:
         conn.execute(stmt.Insert_cat, asdict(cat))
@@ -172,12 +173,13 @@ def insert_cat(
             return Err(f"Category Exists (类别已存在): {cat.name}")
         else:
             raise
-    return Ok()
+    return Ok(name)
 
 
 def update_cat(
     conn: Conn, name: str, notes: str, cat_id: str
 ) -> Result[str, str]:
+    name = name.replace(" ", "")
     try:
         conn.execute(stmt.Update_cat, dict(name=name, notes=notes, id=cat_id))
     except Exception as e:
@@ -185,7 +187,14 @@ def update_cat(
             return Err(f"Category Exists (类别已存在): {name}")
         else:
             raise
-    return Ok()
+    return Ok(name)
+
+
+def delete_cat(conn: Conn, cat_id: str) -> Result[str, str]:
+    n = fetchone(conn, stmt.Count_articles_by_cat, (cat_id,))
+    if n > 0:
+        return Err(f"有 {n} 篇文章与该类别关联，不可删除")
+    return connUpdate(conn, stmt.Delete_cat, (cat_id,))
 
 
 def insert_tags(conn: Conn, tags: list[str], article_id: str) -> None:
@@ -232,6 +241,7 @@ def delete_tags(conn: Conn, article_id: str, tags: list[str]) -> None:
         return
     params = [{"tag_name": tag, "article_id": article_id} for tag in tags]
     connUpdate(conn, stmt.Delete_tag_article, params, many=True).unwrap()
+    # 如果一个标签已经不再关联任何文章，则该标签也会被删除。
     for tag in tags:
         if count_articles_by_tag(conn, tag) == 0:
             connUpdate(conn, stmt.Delete_tag, (tag,)).unwrap()
