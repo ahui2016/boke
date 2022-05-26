@@ -190,9 +190,9 @@ def update_cat(
     return Ok(name)
 
 
-def rename_tag(conn: Conn, new_name: str, tag_id: str) -> Result[str, str]:
+def rename_tag(conn: Conn, new_name: str, old_name: str) -> Result[str, str]:
     try:
-        conn.execut(stmt.Rename_tag, dict(name=new_name, id=tag_id))
+        conn.execute(stmt.Rename_tag, dict(new_name=new_name, old_name=old_name))
     except Exception as e:
         if "UNIQUE constraint failed" in str(e):
             return Err(f"Tag Exists (标签已存在): {new_name}")

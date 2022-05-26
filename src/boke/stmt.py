@@ -149,7 +149,7 @@ Insert_tag: Final = """
     """
 
 Rename_tag: Final = """
-    UPDATE tag SET name=:name WHERE id=:id;
+    UPDATE tag SET name=:new_name WHERE name=:old_name;
 """
 
 Insert_article: Final = """

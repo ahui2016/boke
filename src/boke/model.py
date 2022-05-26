@@ -43,7 +43,7 @@ def date_id() -> str:
 
 
 def rand_id() -> str:
-    """前缀 + 只有 3～4 个字符的随机字符串"""
+    """只有 3～4 个字符的随机字符串"""
     n_min = int("100", 36)
     n_max = int("zzzz", 36)
     n_rand = randrange(n_min, n_max + 1)

@@ -226,12 +226,17 @@ def generate_rss(conn: Conn, cfg: model.BlogConfig, force: bool) -> None:
 def generate_all(
     conn: Conn, theme: str, copy_assets: bool, force_all: bool
 ) -> None:
+    folder_is_empty = not os.listdir(db.output_dir)
+    if folder_is_empty or copy_assets:
+        copy_static_files()
+    
+    if folder_is_empty:
+        force_all = True
+
     cfg = db.get_cfg(conn).unwrap()
     if theme != "unchanged":
         copy_theme(theme)
     generate_html(conn, cfg, force_all)
     generate_rss(conn, cfg, force_all)
 
-    if (not os.listdir(db.output_dir)) or copy_assets:
-        copy_static_files()
     print("OK. (完成)")

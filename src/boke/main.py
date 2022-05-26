@@ -31,8 +31,7 @@ def show_info(ctx: click.Context, _, value):
         f"\n           [boke] {__file__}" f"\n        [version] {__version__}"
     )
 
-    with db.connect() as conn:
-        util.show_cfg(conn)
+    db.execute(util.show_cfg)
 
     print("           [repo] https://github.com/ahui2016/boke")
     print()
@@ -218,7 +217,7 @@ def update(ctx: click.Context, filename: os.PathLike, date_only: bool):
     "-sn",
     "--show-notes",
     is_flag=True,
-    help="Show notes about every category.",
+    help="Show notes of categories.",
 )
 @click.argument("cat_id", nargs=1, required=False)
 @click.option("delete", "--delete", is_flag=True, help="Delete the category.")
@@ -247,7 +246,6 @@ def cat(
     with db.connect() as conn:
         if cat_list:
             util.show_cats(conn, show_notes)
-            ctx.exit()
         elif cat_id:
             if len(cat_id) != 4:
                 print(f"id 错误（应由 4 个字符组成）: {cat_id}")
@@ -270,5 +268,49 @@ def cat(
                         print("OK.")
             else:
                 gui.CatForm.exec(cat)
+        else:
+            click.echo(ctx.get_help())
+
+
+@cli.command(context_settings=CONTEXT_SETTINGS)
+@click.option(
+    "tag_list", "-l", "--list", is_flag=True, help="List out all tags."
+)
+@click.option("name", "-name", help="Specify a tag.")
+@click.option("new_name", "-rename", "--rename-to", help="A new name for the tag.")
+@click.option("delete", "-delete", help="Delete the tag.")
+@click.pass_context
+def tag(
+    ctx: click.Context,
+    tag_list: bool,
+    name: str,
+    new_name: str,
+    delete: bool,
+):
+    """List out all tags, or rename a tag.
+
+    列出全部标签，或更改标签名称。
+
+    Examples:
+
+    boke tag -l/--list  (列出全部标签)
+
+    boke tag -name old_name -rename new_name  (标签名从原来的 old_name 改为 new_name)
+    """
+    check_init(ctx)
+
+    with db.connect() as conn:
+        if tag_list:
+            util.show_tags(conn)
+            ctx.exit()
+        elif name and new_name:
+            if not db.exists(conn, stmt.Tag_name, (name,)):
+                print(f"Not Exist: {name}")
+            else:
+                print(f"Rename: {name} => {new_name}")
+                click.confirm("Confirm rename (确认更改标签名称)", abort=True)
+                util.rename_tag(conn, new_name, name)
+        elif delete:
+            print(f"Delete the tag: {delete}")
         else:
             click.echo(ctx.get_help())

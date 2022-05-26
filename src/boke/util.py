@@ -172,12 +172,26 @@ def update_tags(conn: Conn, article_id: str, new_tags: list[str]) -> None:
 
 def show_cats(conn: Conn, show_notes: bool) -> None:
     cats = db.get_all_cats(conn)
+    if not cats:
+        print("There is no category. (尚未添加文章类别)")
+        return
+
     for cat in cats:
         print(f"[id:{cat.id}] {cat.name}")
         if show_notes and cat.notes:
             print("---------")
             print(f"{cat.notes}")
         print()
+
+
+def show_tags(conn: Conn) -> None:
+    tags = db.get_all_tags(conn)
+    if not tags:
+        print("There is no tag. (尚未添加标签)")
+        return
+
+    tag_names = [tag.name for tag in tags]
+    print(f"Tags: {', '.join(tag_names)}")
 
 
 def extract_tags(s: str) -> Result[list[str], str]:
@@ -202,16 +216,17 @@ def get_tag_name(tag_text: str) -> Result[str, str]:
         case Ok(tags):
             if not tags:
                 return Err(f"Not Valid (不是有效标签名): {tag_text}")
-            return db.rename_tag(tags[0])
+            return Ok(tags[0])
 
 
-def rename_tag(conn: Conn, tag_text: str, old_name: str, tag_id: str) -> None:
+# TODO: update files
+def rename_tag(conn: Conn, tag_text: str, old_name: str) -> None:
     match get_tag_name(tag_text):
         case Err(e):
             print(e)
         case Ok(new_name):
-            match db.rename_tag(conn, new_name, tag_id):
+            match db.rename_tag(conn, new_name, old_name):
                 case Err(e):
                     print(e)
                 case Ok():
-                    print(f"{tag_id}: {old_name} --> {new_name}")
+                    print("OK.")
