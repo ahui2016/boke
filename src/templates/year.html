@@ -9,7 +9,7 @@
 <h2>Articles in year {{ year }}</h2>
 <ul>
   {% for art in articles %}
-  <li>{{ art.published[:10] }} <a href="{{art.published[:4]}}/{{art.id}}.html">{{art.title}}</a></li>
+  <li>{{ art.published[:10] }} <a href="{{year}}/{{art.id}}.html">{{art.title}}</a></li>
   {% endfor %}
 </ul>
 {% endblock %}
