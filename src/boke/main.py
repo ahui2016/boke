@@ -277,7 +277,9 @@ def cat(
     "tag_list", "-l", "--list", is_flag=True, help="List out all tags."
 )
 @click.option("name", "-name", help="Specify a tag.")
-@click.option("new_name", "-rename", "--rename-to", help="A new name for the tag.")
+@click.option(
+    "new_name", "-rename", "--rename-to", help="A new name for the tag."
+)
 @click.option("delete", "-delete", help="Delete the tag.")
 @click.pass_context
 def tag(

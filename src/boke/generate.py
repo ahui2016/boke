@@ -24,6 +24,7 @@ md_render: Final = mistune.create_markdown(
 tmplfile: Final = dict(
     base="base.html",
     index="index.html",
+    year="year.html",
     cat="cat.html",
     article="article.html",
     tag="tag.html",
@@ -60,11 +61,19 @@ def render_write_index(
     blog: model.BlogConfig,
     cats: list[model.Category],
     tags: list[model.Tag],
+    year_count: list[tuple[str, int]],
     articles: list,
 ) -> None:
     tmpl = jinja_env.get_template(tmplfile["index"])
     html = tmpl.render(
-        dict(blog=blog, cats=cats, tags=tags, articles=articles, parent_dir="")
+        dict(
+            blog=blog,
+            cats=cats,
+            tags=tags,
+            year_count=year_count,
+            articles=articles,
+            parent_dir="",
+        )
     )
     output = db.output_dir.joinpath(tmplfile["index"])
     print(f"render and write {output}")
@@ -167,6 +176,36 @@ def set_art_content(articles: list[model.Article]) -> list:
     return arts
 
 
+def articles_in_years(
+    articles: list[model.Article],
+) -> dict[str, list[model.Article]]:
+    arts: dict[str, list[model.Article]] = {}
+    for art in articles:
+        yyyy = art.published[:4]
+        if yyyy in arts:
+            arts[yyyy].append(art)
+        else:
+            arts[yyyy] = [art]
+
+    for yyyy in arts:
+        arts[yyyy].sort(key=lambda x: x.published, reverse=True)
+
+    return arts
+
+
+def render_write_year(
+    blog: model.BlogConfig, articles: list[model.Article]
+) -> None:
+    year = articles[0].published[:4]
+    tmpl = jinja_env.get_template(tmplfile["year"])
+    html = tmpl.render(
+        dict(blog=blog, year=year, articles=articles, parent_dir="")
+    )
+    output = db.output_dir.joinpath(f"year_{year}.html")
+    print(f"render and write ({year}) {output}")
+    output.write_text(html, encoding="utf-8")
+
+
 def generate_html(conn: Conn, cfg: model.BlogConfig, force_all: bool) -> None:
     """如果 force_all is True, 就强制重新生成全部文章。
     如果 force_all is False, 则只生成新文章与有更新的文章。
@@ -181,6 +220,7 @@ def generate_html(conn: Conn, cfg: model.BlogConfig, force_all: bool) -> None:
         else:
             remove_empty_item(tag.id, tag.name)
 
+    public_arts = []
     cat_list = db.get_all_cats(conn)
     cats_has_arts = []
     for cat in cat_list:
@@ -193,6 +233,7 @@ def generate_html(conn: Conn, cfg: model.BlogConfig, force_all: bool) -> None:
                 remove_hidden_article(article)
             else:
                 arts.append(article)
+                public_arts.append(article)
 
         # 区分是否生成文章
         for art in arts:
@@ -207,9 +248,21 @@ def generate_html(conn: Conn, cfg: model.BlogConfig, force_all: bool) -> None:
         else:
             remove_empty_item(cat.id, cat.name)
 
+    art_dict = articles_in_years(public_arts)
+    for yyyy in art_dict:
+        render_write_year(cfg, art_dict[yyyy])
+
+    year_count: list[tuple[str, int]] = []
+    for yyyy in art_dict:
+        year_count.append((yyyy, len(art_dict[yyyy])))
+
+    year_count.sort(key=lambda x: x[0], reverse=True)
+
     articles = db.get_recent_articles(conn, cfg.home_recent_max)
     recent_arts = set_cat_name(cat_list, articles)
-    render_write_index(cfg, cats_has_arts, tags_has_arts, recent_arts)
+    render_write_index(
+        cfg, cats_has_arts, tags_has_arts, year_count, recent_arts
+    )
 
 
 def generate_rss(conn: Conn, cfg: model.BlogConfig, force: bool) -> None:
@@ -229,7 +282,7 @@ def generate_all(
     folder_is_empty = not os.listdir(db.output_dir)
     if folder_is_empty or copy_assets:
         copy_static_files()
-    
+
     if folder_is_empty:
         force_all = True
 

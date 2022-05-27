@@ -26,12 +26,20 @@
   <a href="tag_{{tag.id}}.html">{{tag.name}}</a>
   {% endfor %}
 </div>
+
+<h3>Archives</h3>
+<div class="Tags">
+  {% for item in year_count %}
+  <a href="year_{{item[0]}}.html">{{item[0]}}({{item[1]}})</a>
+  {% endfor %}
+</div>
 {% endblock %}
 
 {% block footer %}
 <footer>
   <p>
-    LICENSE <a href="LICENSE.txt">CC0-1.0</a>
+    Author: {{ blog.author }}
+    | LICENSE <a href="LICENSE.txt">CC0-1.0</a>
     | RSS <a href="atom.xml">atom.xml</a>
   </p>
 </footer>
