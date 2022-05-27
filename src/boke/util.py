@@ -219,7 +219,6 @@ def get_tag_name(tag_text: str) -> Result[str, str]:
             return Ok(tags[0])
 
 
-# TODO: update files
 def rename_tag(conn: Conn, tag_text: str, old_name: str) -> None:
     match get_tag_name(tag_text):
         case Err(e):
@@ -229,4 +228,4 @@ def rename_tag(conn: Conn, tag_text: str, old_name: str) -> None:
                 case Err(e):
                     print(e)
                 case Ok():
-                    print("OK.")
+                    print("已更改标签名，请执行 'boke gen -all' 重新生成 HTML 文件。")

@@ -196,9 +196,9 @@ def generate_html(conn: Conn, cfg: model.BlogConfig, force_all: bool) -> None:
 
         # 区分是否生成文章
         for art in arts:
-            if force_all is True or article.updated > article.last_pub:
-                render_write_article(cfg, cat, article)
-                db.update_last_pub(conn, article.id)
+            if force_all is True or art.updated > art.last_pub:
+                render_write_article(cfg, cat, art)
+                db.update_last_pub(conn, art.id)
 
         # 区分是否生成类别
         if len(arts) > 0:

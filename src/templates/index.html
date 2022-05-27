@@ -16,14 +16,14 @@
 <h3>Categories</h3>
 <div class="Categories">
   {% for cat in cats %}
-  <a href="{{cat.id}}.html">{{cat.name}}</a>
+  <a href="cat_{{cat.id}}.html">{{cat.name}}</a>
   {% endfor %}
 </div>
 
 <h3>Tags</h3>
 <div class="Tags">
   {% for tag in tags %}
-  <a href="{{tag.id}}.html">{{tag.name}}</a>
+  <a href="tag_{{tag.id}}.html">{{tag.name}}</a>
   {% endfor %}
 </div>
 {% endblock %}
