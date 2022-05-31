@@ -21,7 +21,7 @@ md_render: Final = mistune.create_markdown(
     plugins=["strikethrough", "footnotes", "table", "url"]
 )
 
-# 发布时，除了 tmplfile 之外, templates 文件夹里的全部文件都会被复制到 ouput 文件夹。
+# 发布时，除了 tmplfile 之外, templates 文件夹里的全部文件都会被复制到 output 文件夹。
 tmplfile: Final = dict(
     base="base.html",
     index="index.html",
@@ -205,7 +205,8 @@ def render_write_year(blog: BlogConfig, articles: list[Article]) -> None:
 
 def render_tags(conn: Conn, cfg: BlogConfig, tags: list[Tag]) -> None:
     for tag in tags:
-        articles = db.get_articles_by_tag(conn, tag.name)
+        articles = db.get_pub_arts_by_tag(conn, tag.name)
+        print(articles)
         if len(articles) > 0:
             render_write_tag(cfg, tag, articles)
         else:
@@ -217,7 +218,7 @@ def get_tags_has_arts(conn: Conn) -> list[Tag]:
 
     tags = db.get_all_tags(conn)
     for tag in tags:
-        n = db.count_articles_by_tag_public(conn, tag.name)
+        n = db.count_pub_arts_by_tag(conn, tag.name)
         if n > 0:
             tags_has_arts.append(tag)
     

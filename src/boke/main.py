@@ -60,14 +60,14 @@ def set_blog_info(ctx: click.Context, _, value):
     "-i",
     "--info",
     is_flag=True,
-    help="Show informations about config and more.",
+    help="Show information about config and more.",
     expose_value=False,
     callback=show_info,
 )
 @click.option(
     "--blog-info",
     is_flag=True,
-    help="Update informations of the blog.",
+    help="Update information of the blog.",
     expose_value=False,
     callback=set_blog_info,
 )
@@ -255,18 +255,18 @@ def cat(
                 print("（提示：可使用命令 'boke cat -l' 查看文章类别的 id）")
                 return
 
-            cat = db.get_cat(conn, cat_id).unwrap()
+            c = db.get_cat(conn, cat_id).unwrap()
 
             if delete:
-                print(f"{cat.id}: {cat.name}")
+                print(f"{c.id}: {c.name}")
                 click.confirm("Confirm deletion (确认删除)", abort=True)
-                match db.delete_cat(conn, cat.id):
+                match db.delete_cat(conn, c.id):
                     case Err(e):
                         print(e)
                     case Ok():
                         print("OK.")
             else:
-                gui.CatForm.exec(cat)
+                gui.CatForm.exec(c)
         else:
             click.echo(ctx.get_help())
 

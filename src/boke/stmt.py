@@ -111,18 +111,13 @@ Count_articles_by_tag: Final = """
     WHERE tag_article.tag_id=tag.id and tag.name=?;
     """
 
-Get_articles_by_tag: Final = """
-    SELECT * FROM article WHERE hidden=0 and id=(
-        SELECT article_id FROM tag_article, tag
-        WHERE tag_article.tag_id=tag.id and tag.name=?
-    ) ORDER BY published DESC;
+Get_art_ids_by_tag: Final = """
+    SELECT article_id FROM tag_article, tag
+    WHERE tag_article.tag_id=tag.id and tag.name=?;
     """
 
-Count_articles_by_tag_public: Final = """
-    SELECT count(*) FROM article WHERE hidden=0 and id=(
-        SELECT article_id FROM tag_article, tag
-        WHERE tag_article.tag_id=tag.id and tag.name=?
-    ) ORDER BY published DESC;
+Get_article_hidden: Final = """
+    SELECT hidden FROM article WHERE id=?;
     """
 
 Get_recent_articles: Final = """

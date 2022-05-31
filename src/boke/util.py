@@ -5,13 +5,13 @@ import shutil
 import sqlite3
 from result import Err, Ok, Result
 from . import stmt
-from . import model
 from . import db
+from . import model
+from .model import Tag, BlogConfig
 from .generate import render_tags
 
 
 Conn = sqlite3.Connection
-BlogConfig = model.BlogConfig
 
 
 def show_cfg(conn: Conn, cfg: BlogConfig | None = None) -> None:
@@ -163,6 +163,14 @@ def not_in_posted(src_file: Path, article_id: str, published: str) -> bool:
     return False
 
 
+def get_tags_by_names(conn: Conn, names: list[str]) -> list[Tag]:
+    tags = []
+    for name in names:
+        tag_id = db.fetchone(conn, stmt.Get_tag_id, (name,))
+        tags.append(Tag(id=tag_id, name=name))
+    return tags
+
+
 def update_tags(
     conn: Conn, cfg: BlogConfig, article_id: str, new_tags: list[str]
 ) -> None:
@@ -170,7 +178,8 @@ def update_tags(
     diff_tags = model.tags_diff(new_tags, old_tags)
     db.insert_tags(conn, diff_tags["to_add"], article_id)
     db.delete_tags(conn, article_id, diff_tags["to_del"])
-    render_tags(conn, cfg, diff_tags["to_add"] + diff_tags["to_del"])
+    tags = get_tags_by_names(conn, diff_tags["to_add"] + diff_tags["to_del"])
+    render_tags(conn, cfg, tags)
 
 
 def show_cats(conn: Conn, show_notes: bool) -> None:
@@ -200,7 +209,7 @@ def show_tags(conn: Conn) -> None:
 def extract_tags(s: str) -> Result[list[str], str]:
     sep_pattern = re.compile(r"[#;,，；\s]")
     forbid_pattern = re.compile(
-        r"[\`\~\!\@\$\%\^\&\*\(\)\-\=\+\[\]\{\}\\\|\:\'\"\<\>\.\?\/]"
+        r"[`~!@$%^&*()\-=+\[\]{}\\|:\'\"<>.?/]"
     )
 
     matched = forbid_pattern.search(s)

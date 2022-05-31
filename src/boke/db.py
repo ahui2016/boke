@@ -6,9 +6,9 @@ from result import Err, Ok, Result
 import sqlite3
 from . import stmt
 from . import model
+from .model import Article, BlogConfig, Tag
 
 Conn = sqlite3.Connection
-BlogConfig = model.BlogConfig
 
 NoResultError = "database-no-result"
 OK = Ok("OK.")
@@ -38,7 +38,7 @@ def execute(func: Callable, *args):
         return func(conn, *args)
 
 
-def connUpdate(
+def conn_update(
     conn: Conn, query: str, param: Iterable, many: bool = False
 ) -> Result[int, str]:
     if many:
@@ -67,7 +67,7 @@ def get_cfg(conn: Conn) -> Result[BlogConfig, str]:
 
 
 def update_cfg(conn: Conn, cfg: BlogConfig) -> None:
-    connUpdate(
+    conn_update(
         conn,
         stmt.Update_metadata,
         {"name": model.Blog_cfg_name, "value": json.dumps(asdict(cfg))},
@@ -82,7 +82,7 @@ def update_cfg_now(conn: Conn) -> None:
 
 def init_cfg(conn: Conn, cfg: BlogConfig) -> None:
     if get_cfg(conn).is_err():
-        connUpdate(
+        conn_update(
             conn,
             stmt.Insert_metadata,
             {"name": model.Blog_cfg_name, "value": json.dumps(asdict(cfg))},
@@ -105,22 +105,22 @@ def get_all_cats_name(conn: Conn) -> list[str]:
     return [row["name"] for row in rows]
 
 
-def get_all_tags(conn: Conn) -> list[model.Tag]:
+def get_all_tags(conn: Conn) -> list[Tag]:
     rows = conn.execute(stmt.Get_all_tags).fetchall()
     return [model.new_tag_from(row) for row in rows]
 
 
-def get_articles_by_cat(conn: Conn, cat_id: str) -> list[model.Article]:
+def get_articles_by_cat(conn: Conn, cat_id: str) -> list[Article]:
     rows = conn.execute(stmt.Get_articles_by_cat, (cat_id,)).fetchall()
     return [model.new_article_from(row) for row in rows]
 
 
-def get_recent_articles(conn: Conn, limit: int) -> list[model.Article]:
+def get_recent_articles(conn: Conn, limit: int) -> list[Article]:
     rows = conn.execute(stmt.Get_recent_articles, (limit,)).fetchall()
     return [model.new_article_from(row) for row in rows]
 
 
-def get_article(conn: Conn, article_id: str) -> model.Article:
+def get_article(conn: Conn, article_id: str) -> Article:
     row = conn.execute(stmt.Get_article, (article_id,)).fetchone()
     return model.new_article_from(row)
 
@@ -130,7 +130,7 @@ def get_tag_names(conn: Conn, article_id: str) -> list[str]:
     return [row[0] for row in rows]
 
 
-def get_tags_by_article(conn: Conn, article_id: str) -> list[str]:
+def get_tags_by_article(conn: Conn, article_id: str) -> list[Tag]:
     rows = conn.execute(stmt.Get_tags_by_article, (article_id,)).fetchall()
     return [model.new_tag_from(row) for row in rows]
 
@@ -139,13 +139,30 @@ def count_articles_by_tag(conn: Conn, tag_name: str) -> int:
     return fetchone(conn, stmt.Count_articles_by_tag, (tag_name,))
 
 
-def count_articles_by_tag_public(conn: Conn, tag_name: str) -> int:
-    return fetchone(conn, stmt.Count_articles_by_tag_public, (tag_name,))
+def get_art_ids_by_tag(conn: Conn, tag_name: str) -> list[str]:
+    rows = conn.execute(stmt.Get_art_ids_by_tag, (tag_name,)).fetchall()
+    return [row[0] for row in rows]
 
 
-def get_articles_by_tag(conn: Conn, tag_name: str) -> list[model.Article]:
-    rows = conn.execute(stmt.Get_articles_by_tag, (tag_name,)).fetchall()
-    return [model.new_article_from(row) for row in rows]
+def get_pub_arts_by_tag(conn: Conn, tag_name: str) -> list[Article]:
+    """获取公开的文章"""
+    pub_arts = []
+    art_ids = get_art_ids_by_tag(conn, tag_name)
+    for art_id in art_ids:
+        art = get_article(conn, art_id)
+        if not art.hidden:
+            pub_arts.append(art)
+    return pub_arts
+
+
+def count_pub_arts_by_tag(conn: Conn, tag_name: str) -> int:
+    n = 0
+    art_ids = get_art_ids_by_tag(conn, tag_name)
+    for art_id in art_ids:
+        hidden = fetchone(conn, stmt.Get_article_hidden, (art_id,))
+        if hidden == 0:
+            n += 1
+    return n
 
 
 def get_cat(conn: Conn, cat_id: str) -> Result[model.Category, str]:
@@ -156,10 +173,10 @@ def get_cat(conn: Conn, cat_id: str) -> Result[model.Category, str]:
 
 
 def insert_cat(
-    conn: Conn, name: str, notes: str = "", id: str = ""
+    conn: Conn, name: str, notes: str = "", cat_id: str = ""
 ) -> Result[str, str]:
     name = name.replace(" ", "")
-    cat = model.new_cat_from(dict(id=id, name=name, notes=notes))
+    cat = model.new_cat_from(dict(id=cat_id, name=name, notes=notes))
     try:
         conn.execute(stmt.Insert_cat, asdict(cat))
     except Exception as e:
@@ -201,7 +218,7 @@ def delete_cat(conn: Conn, cat_id: str) -> Result[str, str]:
     n = fetchone(conn, stmt.Count_articles_by_cat, (cat_id,))
     if n > 0:
         return Err(f"有 {n} 篇文章与该类别关联，不可删除。")
-    return connUpdate(conn, stmt.Delete_cat, (cat_id,))
+    return conn_update(conn, stmt.Delete_cat, (cat_id,))
 
 
 def insert_tags(conn: Conn, tags: list[str], article_id: str) -> None:
@@ -213,30 +230,30 @@ def insert_tags(conn: Conn, tags: list[str], article_id: str) -> None:
         if not tag_id:
             tag = model.new_tag_from({"name": tag_name})
             tag_ids.append(tag.id)
-            connUpdate(conn, stmt.Insert_tag, asdict(tag)).unwrap()
+            conn_update(conn, stmt.Insert_tag, asdict(tag)).unwrap()
         else:
             tag_ids.append(tag_id[0])
     params = [
         {"tag_id": tag_id, "article_id": article_id} for tag_id in tag_ids
     ]
-    connUpdate(conn, stmt.Insert_tag_article, params, many=True).unwrap()
+    conn_update(conn, stmt.Insert_tag_article, params, many=True).unwrap()
 
 
 def insert_article(
-    conn: Conn, article: model.Article, tags: list[str]
+    conn: Conn, article: Article, tags: list[str]
 ) -> None:
-    connUpdate(conn, stmt.Insert_article, asdict(article)).unwrap()
+    conn_update(conn, stmt.Insert_article, asdict(article)).unwrap()
     insert_tags(conn, tags, article.id)
 
 
 def update_last_pub(conn: Conn, article_id: str) -> None:
-    connUpdate(
+    conn_update(
         conn, stmt.Update_last_pub, dict(last_pub=model.now(), id=article_id)
     ).unwrap()
 
 
 def update_article_date(conn: Conn, article_id: str) -> None:
-    connUpdate(
+    conn_update(
         conn,
         stmt.Update_article_date,
         dict(updated=model.now(), id=article_id),
@@ -247,8 +264,8 @@ def delete_tags(conn: Conn, article_id: str, tags: list[str]) -> None:
     if not tags:
         return
     params = [{"tag_name": tag, "article_id": article_id} for tag in tags]
-    connUpdate(conn, stmt.Delete_tag_article, params, many=True).unwrap()
+    conn_update(conn, stmt.Delete_tag_article, params, many=True).unwrap()
     # 如果一个标签已经不再关联任何文章，则该标签也会被删除。
     for tag in tags:
         if count_articles_by_tag(conn, tag) == 0:
-            connUpdate(conn, stmt.Delete_tag, (tag,)).unwrap()
+            conn_update(conn, stmt.Delete_tag, (tag,)).unwrap()

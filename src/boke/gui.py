@@ -32,6 +32,7 @@ QPushButton {
 NewCategory: Final = "新建 (New category)"
 
 
+# noinspection PyUnresolvedReferences
 class ReadonlyLineEdit(QtWidgets.QLineEdit):
     clicked = Signal(tuple)
 
@@ -46,6 +47,11 @@ class ReadonlyLineEdit(QtWidgets.QLineEdit):
 
 # 这里 class 只是用来作为 namespace.
 class InitBlogForm:
+    buttonBox = None
+    author_input = None
+    name_input = None
+    form = None
+
     @classmethod
     def init(cls) -> None:
         cls.form = QtWidgets.QDialog()
@@ -99,6 +105,14 @@ class InitBlogForm:
 
 # 这里 class 只是用来作为 namespace.
 class UpdateBlogForm:
+    buttonBox = None
+    recent_max_input = None
+    website_input = None
+    author_input = None
+    blog_cfg = None
+    name_input = None
+    form = None
+
     @classmethod
     def init(cls) -> None:
         with db.connect() as conn:
@@ -209,6 +223,16 @@ class UpdateBlogForm:
 
 # 这里 class 只是用来作为 namespace.
 class CatForm:
+    cat = None
+    buttonBox = None
+    notes_label = None
+    notes_input = None
+    name_label = None
+    name_input = None
+    id_label = None
+    id_input = None
+    form = None
+
     @classmethod
     def init(cls, cat: model.Category) -> None:
         cls.cat = cat
@@ -292,6 +316,27 @@ class CatForm:
 
 # 这里 class 只是用来作为 namespace.
 class ArticleForm:
+    cat_index = None
+    buttonBox = None
+    hidden_input = None
+    hidden_label = None
+    tags_preview_btn = None
+    tags_input = None
+    date_label = None
+    date_input = None
+    cat_label = None
+    cats = None
+    cat_list = None
+    author_label = None
+    blog_cfg = None
+    author_input = None
+    file_label = None
+    file_input = None
+    id_label = None
+    id_input = None
+    title = None
+    form = None
+
     @classmethod
     def init(cls, filename: Path, title: str) -> None:
         cls.src_file = filename
@@ -473,6 +518,9 @@ class ArticleForm:
 
 
 class PostForm(ArticleForm):
+    src_file = None
+    article_title = None
+
     @classmethod
     def init(cls, filename: Path, title: str) -> None:
         super().init(filename, title)
@@ -568,13 +616,19 @@ class PostForm(ArticleForm):
         # 发表文章(从 drafts 移动到 posted), 更新标签索引
         with db.connect() as conn:
             util.post_article(conn, cls.src_file, article, tags)
-            render_tags(conn, cls.blog_cfg, tags)
+            tag_list = util.get_tags_by_names(conn, tags)
+            render_tags(conn, cls.blog_cfg, tag_list)
 
         util.show_article_info(article, cat, tags, cls.blog_cfg)
         cls.form.close()
 
 
 class UpdateForm(PostForm):
+    last_pub = None
+    hidden = None
+    published = None
+    article_id = None
+
     @classmethod
     def init(cls, filename: Path, title: str) -> None:
         super().init(filename, title)
@@ -582,8 +636,6 @@ class UpdateForm(PostForm):
         cls.title.setText("Update the article")
 
         cls.article_id = filename.stem
-        cat_name = ""
-        tags = []
         with db.connect() as conn:
             article = db.get_article(conn, cls.article_id)
             cat = db.get_cat(conn, article.cat_id).unwrap()
@@ -703,7 +755,7 @@ class UpdateForm(PostForm):
 
         # 更新数据库
         with db.connect() as conn:
-            db.connUpdate(conn, stmt.Update_article, art_dict)
+            db.conn_update(conn, stmt.Update_article, art_dict)
             util.update_tags(conn, cls.blog_cfg, new_id, tags)
 
         # 更新文件名
@@ -732,8 +784,8 @@ def label_center(text: str) -> QtWidgets.QLabel:
 
 
 def alert(title: str, text: str, icon: Icon = Icon.Information) -> None:
-    msgBox = QtWidgets.QMessageBox()
-    msgBox.setIcon(icon)
-    msgBox.setWindowTitle(title)
-    msgBox.setText(text)
-    msgBox.exec()
+    msg_box = QtWidgets.QMessageBox()
+    msg_box.setIcon(icon)
+    msg_box.setWindowTitle(title)
+    msg_box.setText(text)
+    msg_box.exec()
