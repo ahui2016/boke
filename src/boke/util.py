@@ -7,6 +7,7 @@ from result import Err, Ok, Result
 from . import stmt
 from . import model
 from . import db
+from .generate import render_tags
 
 
 Conn = sqlite3.Connection
@@ -87,12 +88,10 @@ def get_md_file_title(filename: Path) -> Result[str, str]:
 
 
 def post_article(
-    src_file: Path, article: model.Article, tags: list[str]
+    conn: Conn, src_file: Path, article: model.Article, tags: list[str]
 ) -> None:
-    with db.connect() as conn:
-        db.insert_article(conn, article, tags)
-        db.update_cfg_now(conn)
-
+    db.insert_article(conn, article, tags)
+    db.update_cfg_now(conn)
     dst_dir = db.posted_dir.joinpath(article.published[:4])
     dst_dir.mkdir(exist_ok=True)
     dst = dst_dir.joinpath(article.id + model.md_suffix)
@@ -163,11 +162,14 @@ def not_in_posted(src_file: Path, article_id: str, published: str) -> bool:
     return False
 
 
-def update_tags(conn: Conn, article_id: str, new_tags: list[str]) -> None:
+def update_tags(
+    conn: Conn, cfg: BlogConfig, article_id: str, new_tags: list[str]
+) -> None:
     old_tags = db.get_tag_names(conn, article_id)
     diff_tags = model.tags_diff(new_tags, old_tags)
     db.insert_tags(conn, diff_tags["to_add"], article_id)
     db.delete_tags(conn, article_id, diff_tags["to_del"])
+    render_tags(conn, cfg, diff_tags["to_add"] + diff_tags["to_del"])
 
 
 def show_cats(conn: Conn, show_notes: bool) -> None:

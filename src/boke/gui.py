@@ -9,6 +9,7 @@ from . import model
 from . import stmt
 from . import db
 from . import util
+from .generate import render_tags
 
 # https://doc.qt.io/qtforpython/overviews/qtwidgets-widgets-windowflags-example.html
 # from PySide6.QtCore import Qt
@@ -564,8 +565,11 @@ class PostForm(ArticleForm):
             )
         )
 
-        # 发表文章（从 drafts 移动到 posted）
-        util.post_article(cls.src_file, article, tags)
+        # 发表文章(从 drafts 移动到 posted), 更新标签索引
+        with db.connect() as conn:
+            util.post_article(conn, cls.src_file, article, tags)
+            render_tags(conn, cls.blog_cfg, tags)
+
         util.show_article_info(article, cat, tags, cls.blog_cfg)
         cls.form.close()
 
@@ -700,7 +704,7 @@ class UpdateForm(PostForm):
         # 更新数据库
         with db.connect() as conn:
             db.connUpdate(conn, stmt.Update_article, art_dict)
-            util.update_tags(conn, new_id, tags)
+            util.update_tags(conn, cls.blog_cfg, new_id, tags)
 
         # 更新文件名
         if new_id != cls.article_id:

@@ -7,6 +7,7 @@ import mistune
 from typing import Final
 from . import model
 from . import db
+from .model import BlogConfig, Tag, Article, Category
 
 
 Conn = sqlite3.Connection
@@ -49,7 +50,7 @@ def copy_theme(theme: str) -> None:
     shutil.copyfile(src, dst)
 
 
-def render_write_rss(blog: model.BlogConfig, entries: list) -> None:
+def render_write_rss(blog: BlogConfig, entries: list) -> None:
     tmpl = jinja_env.get_template(tmplfile["rss"])
     rss = tmpl.render(dict(blog=blog, entries=entries))
     output = db.output_dir.joinpath(model.atom_xml)
@@ -58,9 +59,9 @@ def render_write_rss(blog: model.BlogConfig, entries: list) -> None:
 
 
 def render_write_index(
-    blog: model.BlogConfig,
-    cats: list[model.Category],
-    tags: list[model.Tag],
+    blog: BlogConfig,
+    cats: list[Category],
+    tags: list[Tag],
     year_count: list[tuple[str, int]],
     articles: list,
 ) -> None:
@@ -81,7 +82,7 @@ def render_write_index(
 
 
 def render_write_cat(
-    blog: model.BlogConfig, cat: model.Category, articles: list[model.Article]
+    blog: BlogConfig, cat: Category, articles: list[Article]
 ) -> None:
     tmpl = jinja_env.get_template(tmplfile["cat"])
     html = tmpl.render(
@@ -95,7 +96,7 @@ def render_write_cat(
 
 
 def render_write_tag(
-    blog: model.BlogConfig, tag: model.Tag, articles: list[model.Article]
+    blog: BlogConfig, tag: Tag, articles: list[Article]
 ) -> None:
     tmpl = jinja_env.get_template(tmplfile["tag"])
     html = tmpl.render(
@@ -108,7 +109,7 @@ def render_write_tag(
     output.write_text(html, encoding="utf-8")
 
 
-def remove_hidden_article(article: model.Article) -> None:
+def remove_hidden_article(article: Article) -> None:
     dst_dir = db.output_dir.joinpath(article.published[:4])
     dst_file = dst_dir.joinpath(article.id + model.html_suffix)
     if dst_file.exists():
@@ -116,17 +117,17 @@ def remove_hidden_article(article: model.Article) -> None:
         os.remove(dst_file)
 
 
-def remove_empty_item(item_id: str, item_name: str) -> None:
-    f = db.output_dir.joinpath(item_id + model.html_suffix)
+def remove_empty_item(prefix: str, item_id: str, item_name: str) -> None:
+    f = db.output_dir.joinpath(prefix + item_id + model.html_suffix)
     if f.exists():
         print(f"REMOVE ({item_name}) {f}")
         os.remove(f)
 
 
 def render_write_article(
-    blog: model.BlogConfig,
-    cat: model.Category,
-    article: model.Article,
+    blog: BlogConfig,
+    cat: Category,
+    article: Article,
 ) -> None:
     src_file = db.posted_file_path(article.id, article.published)
     dst_dir = db.output_dir.joinpath(article.published[:4])
@@ -146,9 +147,7 @@ def render_write_article(
     dst_file.write_text(html, encoding="utf-8")
 
 
-def set_cat_name(
-    categories: list[model.Category], articles: list[model.Article]
-) -> list:
+def set_cat_name(categories: list[Category], articles: list[Article]) -> list:
     cats = {}
     for cat in categories:
         cats[cat.id] = cat.name
@@ -163,7 +162,7 @@ def set_cat_name(
     return arts
 
 
-def set_art_content(articles: list[model.Article]) -> list:
+def set_art_content(articles: list[Article]) -> list:
     arts = []
     for i, art in enumerate(articles):
         art_file = db.posted_file_path(art.id, art.published)
@@ -177,9 +176,9 @@ def set_art_content(articles: list[model.Article]) -> list:
 
 
 def articles_in_years(
-    articles: list[model.Article],
-) -> dict[str, list[model.Article]]:
-    arts: dict[str, list[model.Article]] = {}
+    articles: list[Article],
+) -> dict[str, list[Article]]:
+    arts: dict[str, list[Article]] = {}
     for art in articles:
         yyyy = art.published[:4]
         if yyyy in arts:
@@ -193,9 +192,7 @@ def articles_in_years(
     return arts
 
 
-def render_write_year(
-    blog: model.BlogConfig, articles: list[model.Article]
-) -> None:
+def render_write_year(blog: BlogConfig, articles: list[Article]) -> None:
     year = articles[0].published[:4]
     tmpl = jinja_env.get_template(tmplfile["year"])
     html = tmpl.render(
@@ -206,19 +203,28 @@ def render_write_year(
     output.write_text(html, encoding="utf-8")
 
 
-def generate_html(conn: Conn, cfg: model.BlogConfig, force_all: bool) -> None:
-    """如果 force_all is True, 就强制重新生成全部文章。
-    如果 force_all is False, 则只生成新文章与有更新的文章。
-    """
-    tags = db.get_all_tags(conn)
+def render_tags(conn: Conn, cfg: BlogConfig, tags: list[Tag]) -> list[Tag]:
     tags_has_arts = []
+
     for tag in tags:
         articles = db.get_articles_by_tag(conn, tag.name)
         if len(articles) > 0:
             render_write_tag(cfg, tag, articles)
             tags_has_arts.append(tag)
         else:
-            remove_empty_item(tag.id, tag.name)
+            remove_empty_item(model.tag_id_prefix, tag.id, tag.name)
+
+    return tags_has_arts
+
+
+def generate_html(conn: Conn, cfg: BlogConfig, force_all: bool) -> None:
+    """如果 force_all is True, 就强制重新生成全部文章。
+    如果 force_all is False, 则只生成新文章与有更新的文章。
+    """
+    tags_has_arts = []
+    if force_all:
+        tags = db.get_all_tags(conn)
+        tags_has_arts = render_tags(conn, cfg, tags)
 
     public_arts = []
     cat_list = db.get_all_cats(conn)
@@ -246,7 +252,7 @@ def generate_html(conn: Conn, cfg: model.BlogConfig, force_all: bool) -> None:
             render_write_cat(cfg, cat, arts)
             cats_has_arts.append(cat)
         else:
-            remove_empty_item(cat.id, cat.name)
+            remove_empty_item(model.cat_id_prefix, cat.id, cat.name)
 
     art_dict = articles_in_years(public_arts)
     for yyyy in art_dict:
@@ -265,7 +271,7 @@ def generate_html(conn: Conn, cfg: model.BlogConfig, force_all: bool) -> None:
     )
 
 
-def generate_rss(conn: Conn, cfg: model.BlogConfig, force: bool) -> None:
+def generate_rss(conn: Conn, cfg: BlogConfig, force: bool) -> None:
     if not force and cfg.feed_last_pub > cfg.updated:
         return
 
