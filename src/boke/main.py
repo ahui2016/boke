@@ -202,7 +202,7 @@ def update(ctx: click.Context, filename: os.PathLike, date_only: bool):
                 ctx.exit()
 
             if date_only:
-                util.update_article_date(article_id)
+                util.update_article_date(title, article_id)
             else:
                 gui.UpdateForm.exec(art_file, title)
 

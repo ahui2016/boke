@@ -252,11 +252,11 @@ def update_last_pub(conn: Conn, article_id: str) -> None:
     ).unwrap()
 
 
-def update_article_date(conn: Conn, article_id: str) -> None:
+def update_article_date(conn: Conn, title: str, article_id: str) -> None:
     conn_update(
         conn,
         stmt.Update_article_date,
-        dict(updated=model.now(), id=article_id),
+        dict(updated=model.now(), title=title, id=article_id),
     ).unwrap()
 
 

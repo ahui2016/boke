@@ -175,7 +175,7 @@ Update_last_pub: Final = """
     """
 
 Update_article_date: Final = """
-    UPDATE article SET updated=:updated WHERE id=:id;
+    UPDATE article SET updated=:updated, title=:title WHERE id=:id;
     """
 
 Update_article: Final = """
