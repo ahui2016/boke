@@ -118,6 +118,13 @@ Get_articles_by_tag: Final = """
     ) ORDER BY published DESC;
     """
 
+Count_articles_by_tag_public: Final = """
+    SELECT count(*) FROM article WHERE hidden=0 and id=(
+        SELECT article_id FROM tag_article, tag
+        WHERE tag_article.tag_id=tag.id and tag.name=?
+    ) ORDER BY published DESC;
+    """
+
 Get_recent_articles: Final = """
     SELECT * FROM article WHERE hidden=0 ORDER BY published DESC LIMIT ?;
     """

@@ -126,9 +126,10 @@ def show_article_info_by_id(conn: Conn, article_id: str) -> None:
     show_article_info(article, cat.name, tags, cfg)
 
 
-def update_article_date(conn: Conn, article_id: str) -> None:
-    db.update_article_date(conn, article_id)
-    show_article_info_by_id(conn, article_id)
+def update_article_date(article_id: str) -> None:
+    with db.connect() as conn:
+        db.update_article_date(conn, article_id)
+        show_article_info_by_id(conn, article_id)
 
 
 def check_title_when_update(

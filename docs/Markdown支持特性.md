@@ -1,4 +1,6 @@
-# Markdown 语法与效果
+# Markdown 语法
+
+与效果
 
 参考: <https://support.typora.io/zh/Markdown-Reference/>
 
@@ -54,9 +56,7 @@ boke 采用 [mistune](https://github.com/lepture/mistune) 做从 Markdown 到 HT
 >
 > 这是第二段。Vestibulum enim wisi, viverra nec, fringilla in, laoreet vitae, risus.
 
-
-
-> 这是另一个只有一个段落的块引用。有三个空行分隔两个块引用。
+> 这是另一个只有一个段落的块引用。有一个空行分隔两个块引用。
 
 
 ## 无序列表
@@ -87,23 +87,17 @@ boke 采用 [mistune](https://github.com/lepture/mistune) 做从 Markdown 到 HT
 2. 绿色 长句看看自动换行的效果长句看看自动换行的效果长句看看自动换行的效果长句看看自动换行的效果长句看看自动换行的效果长句看看自动换行的效果长句看看自动换行的效果
 3. 蓝色
 
-## 任务列表
-
-(boke 不支持任务列表)
-
-```md
-- [ ] 这是一个任务列表项
-- [ ] 需要在前面使用列表的语法
-- [x] 完成
-```
-
-- [ ] 这是一个任务列表项
-- [ ] 需要在前面使用列表的语法
-- [x] 完成
-
 ## （栅栏式）代码块
 
-(boke 不支持语法高亮)
+行内代码用反引号进行包裹，例如
+
+```md
+使用 `<html>` 标签。
+```
+
+使用 `<html>` 标签。
+
+代码块用三个反引号进行包裹 (boke 不支持语法高亮)
 
 ```ruby
 require 'redcarpet'
@@ -111,23 +105,29 @@ markdown = Redcarpet.new("Hello World!")
 puts markdown.to_html
 ```
 
-## 数学公式块
-
-$$
-\mathbf{V}_1 \times \mathbf{V}_2 =  \begin{vmatrix} 
-\mathbf{i} & \mathbf{j} & \mathbf{k} \\
-\frac{\partial X}{\partial u} &  \frac{\partial Y}{\partial u} & 0 \\
-\frac{\partial X}{\partial v} &  \frac{\partial Y}{\partial v} & 0 \\
-\end{vmatrix}
-$$
-
 ## 表格
+
+```md
+| First Header  | Second Header |
+| ------------- | ------------- |
+| Content Cell  | Content Cell  |
+| Content Cell  | Content Cell  |
+```
 
 | First Header  | Second Header |
 | ------------- | ------------- |
 | Content Cell  | Content Cell  |
 | Content Cell  | Content Cell  |
 
+表格支持左对齐、居中、右对齐：
+
+```md
+| Left-Aligned  | Center Aligned  | Right Aligned |
+| :------------ |:---------------:| -----:|
+| col 3 is      | some wordy text | $1600 |
+| col 2 is      | centered        |   $12 |
+| zebra stripes | are neat        |    $1 |
+```
 
 | Left-Aligned  | Center Aligned  | Right Aligned |
 | :------------ |:---------------:| -----:|
@@ -135,59 +135,78 @@ $$
 | col 2 is      | centered        |   $12 |
 | zebra stripes | are neat        |    $1 |
 
-------
+## 水平线
 
-您可以像这样创建脚注[^footnote].
+独立一行输入 `---` (三个或更多减号) 可绘制一条水平线。
+
+---
+
+## 脚注
+
+```md
+您可以像这样创建脚注 [^footnote]
+
+[^footnote]: Here is the *text* of the **footnote**. (注意，实际使用中，这一行写在文章的底部。)
+
+点击上标可查看脚注的内容。
+```
+
+您可以像这样创建脚注 [^footnote]
+
+点击上标可查看脚注的内容。
+
+## 水平线(2)
+
+独立一行输入 `***` (三个或更多星号) 也可绘制一条水平线。
+
+***
+
+## 链接
+
+```md
+This is [an example](http://example.com/ "链接的提示/说明") inline link (鼠标悬停在链接上可看到提示).
+
+[This link](http://example.net/) has no title attribute (没有提示).
+
+简单链接可直接使用尖括号，例如 <https://v2ex.com>
+```
+
+This is [an example](http://example.com/ "链接的提示/说明") inline link (鼠标悬停在链接上可看到提示).
+
+[This link](http://example.net/) has no title attribute (没有提示).
+
+简单链接可直接使用尖括号，例如 <https://v2ex.com>
+
+## 图片
+
+图像与链接类似， 但在链接语法之前需要添加额外的 `!` 字符：
+
+```md
+![替代文字](/path/to/img.jpg)
+
+![替代文字](/path/to/img.jpg "可选标题")
+```
+
+##  斜体、粗体、删除线
+
+```md
+好运*单个星号*好运
+
+好运_单个下划线_好运
+
+好运**两个星号**好运
+
+好运~~123abc~~好运
+```
+
+好运*单个星号*好运
+
+好运_单个下划线_好运
+
+好运**两个星号**好运
+
+好运~~123abc~~好运
+
+## 脚注的内容
 
 [^footnote]: Here is the *text* of the **footnote**.
-
-<https://typlog.com/>
-
-******
-
-
-This is [an example](http://example.com/ "Title") inline link.
-
-[This link](http://example.net/) has no title attribute.
-
-This is [an example][id] reference-style link.
-
-然后，在文档中的任何位置，您可以单独定义链接标签，如下所示：
-
-[id]: http://example.com/  "Optional Title Here"
-
-[Google][]
-然后定义链接：
-
-[Google]: http://google.com/
-
-*单个星号*
-
-_单个下划线_
-
-
-    wow_great_stuff
-    
-    do_this_and_do_that_and_another_thing.
-
-\*这个文字被文字星号包围\*
-
-
-**双星号**
-
-__双重下划线__
-
-**双星号 _单个下划线_ **
-
-**双星号 `printf()` **
-
-使用`printf()`函数。
-
-~~错误的文字。~~ 
-
-<u>下划线</u> 
-
-例如： $\lim_{x \to \infty} \exp(-x) = 0$ 将呈现为LaTeX命令。
-
-
-

@@ -192,11 +192,6 @@ def update(ctx: click.Context, filename: os.PathLike, date_only: bool):
         print("(提示: 'boke update' 命令只能用来更新 posted 文件夹里的文件。)")
         ctx.exit()
 
-    if date_only:
-        with db.connect() as conn:
-            util.update_article_date(conn, article_id)
-        ctx.exit()
-
     match util.get_md_file_title(art_file):
         case Err(e):
             print(e)
@@ -205,7 +200,11 @@ def update(ctx: click.Context, filename: os.PathLike, date_only: bool):
                 article_id, title, art_file
             ).is_err():
                 ctx.exit()
-            gui.UpdateForm.exec(art_file, title)
+
+            if date_only:
+                util.update_article_date(article_id)
+            else:
+                gui.UpdateForm.exec(art_file, title)
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)

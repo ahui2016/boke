@@ -203,17 +203,24 @@ def render_write_year(blog: BlogConfig, articles: list[Article]) -> None:
     output.write_text(html, encoding="utf-8")
 
 
-def render_tags(conn: Conn, cfg: BlogConfig, tags: list[Tag]) -> list[Tag]:
-    tags_has_arts = []
-
+def render_tags(conn: Conn, cfg: BlogConfig, tags: list[Tag]) -> None:
     for tag in tags:
         articles = db.get_articles_by_tag(conn, tag.name)
         if len(articles) > 0:
             render_write_tag(cfg, tag, articles)
-            tags_has_arts.append(tag)
         else:
             remove_empty_item(model.tag_id_prefix, tag.id, tag.name)
 
+
+def get_tags_has_arts(conn: Conn) -> list[Tag]:
+    tags_has_arts = []
+
+    tags = db.get_all_tags(conn)
+    for tag in tags:
+        n = db.count_articles_by_tag_public(conn, tag.name)
+        if n > 0:
+            tags_has_arts.append(tag)
+    
     return tags_has_arts
 
 
@@ -221,10 +228,9 @@ def generate_html(conn: Conn, cfg: BlogConfig, force_all: bool) -> None:
     """如果 force_all is True, 就强制重新生成全部文章。
     如果 force_all is False, 则只生成新文章与有更新的文章。
     """
-    tags_has_arts = []
+    tags_has_arts = get_tags_has_arts(conn)
     if force_all:
-        tags = db.get_all_tags(conn)
-        tags_has_arts = render_tags(conn, cfg, tags)
+        render_tags(conn, cfg, tags_has_arts)
 
     public_arts = []
     cat_list = db.get_all_cats(conn)
