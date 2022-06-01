@@ -315,3 +315,28 @@ def tag(
             print(f"Delete the tag: {delete}")
         else:
             click.echo(ctx.get_help())
+
+
+@cli.command(context_settings=CONTEXT_SETTINGS)
+@click.argument("filename", required=True, type=click.Path(exists=True))
+@click.pass_context
+def delete(ctx: click.Context, filename: os.PathLike):
+    """Delete an article. 删除文章。"""
+    check_init(ctx)
+
+    art_file = Path(filename)
+    article_id = art_file.stem
+
+    with db.connect() as conn:
+        id_exists = db.exists(conn, stmt.Article_id, (article_id,))
+        if not id_exists:
+            print(f"Not Found. 找不到 ID: {article_id}")
+            print("(提示: 'boke delete' 命令只能用来删除 posted 文件夹里的文件。)")
+            ctx.exit()
+
+        art = db.get_article(conn, article_id)
+        print(f"\n{art.title}\n{art_file}\n")
+        click.confirm("Confirm delete (确认删除，不可恢复)", abort=True)
+        util.delete_article(conn, art_file, art.published[:4])
+
+    ctx.exit()

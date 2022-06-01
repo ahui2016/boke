@@ -98,6 +98,17 @@ def post_article(
     shutil.move(src_file, dst)
 
 
+def delete_article(conn: Conn, art_file: Path, year: str) -> None:
+    art_id = art_file.stem
+    db.conn_update(conn, stmt.Del_tag_art_by_art_id, (art_id,)).unwrap()
+    db.conn_update(conn, stmt.Delete_article, (art_id,)).unwrap()
+    os.remove(art_file)
+    print(f"Remove {art_file}")
+    html_file = db.output_dir.joinpath(year, art_id + model.html_suffix)
+    os.remove(html_file)
+    print(f"Remove {html_file}")
+
+
 def show_article_info(
     article: model.Article, cat: str, tags: list[str], cfg: BlogConfig
 ) -> None:
@@ -208,9 +219,7 @@ def show_tags(conn: Conn) -> None:
 
 def extract_tags(s: str) -> Result[list[str], str]:
     sep_pattern = re.compile(r"[#;,，；\s]")
-    forbid_pattern = re.compile(
-        r"[`~!@$%^&*()\-=+\[\]{}\\|:\'\"<>.?/]"
-    )
+    forbid_pattern = re.compile(r"[`~!@$%^&*()\-=+\[\]{}\\|:\'\"<>.?/]")
 
     matched = forbid_pattern.search(s)
     if matched is not None:

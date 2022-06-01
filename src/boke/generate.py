@@ -221,7 +221,7 @@ def get_tags_has_arts(conn: Conn) -> list[Tag]:
         n = db.count_pub_arts_by_tag(conn, tag.name)
         if n > 0:
             tags_has_arts.append(tag)
-    
+
     return tags_has_arts
 
 

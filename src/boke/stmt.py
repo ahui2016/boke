@@ -165,9 +165,17 @@ Insert_tag_article: Final = """
     INSERT INTO tag_article (tag_id, article_id) VALUES (:tag_id, :article_id);
     """
 
+Delete_article: Final = """
+    DELETE FROM article WHERE id=?;
+"""
+
 Delete_tag_article = """
     DELETE FROM tag_article WHERE article_id=:article_id and
     tag_id=(SELECT id FROM tag WHERE tag.name=:tag_name);
+    """
+
+Del_tag_art_by_art_id = """
+    DELETE FROM tag_article WHERE article_id=:article_id;
     """
 
 Update_last_pub: Final = """

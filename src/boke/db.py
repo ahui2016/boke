@@ -239,9 +239,7 @@ def insert_tags(conn: Conn, tags: list[str], article_id: str) -> None:
     conn_update(conn, stmt.Insert_tag_article, params, many=True).unwrap()
 
 
-def insert_article(
-    conn: Conn, article: Article, tags: list[str]
-) -> None:
+def insert_article(conn: Conn, article: Article, tags: list[str]) -> None:
     conn_update(conn, stmt.Insert_article, asdict(article)).unwrap()
     insert_tags(conn, tags, article.id)
 

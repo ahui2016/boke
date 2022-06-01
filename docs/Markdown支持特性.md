@@ -1,6 +1,4 @@
-# Markdown 语法
-
-与效果
+# Markdown 语法与效果
 
 参考: <https://support.typora.io/zh/Markdown-Reference/>
 
@@ -108,32 +106,32 @@ puts markdown.to_html
 ## 表格
 
 ```md
-| First Header  | Second Header |
-| ------------- | ------------- |
-| Content Cell  | Content Cell  |
-| Content Cell  | Content Cell  |
+| First Header | Second Header |
+|--------------|---------------|
+| Content Cell | Content Cell  |
+| Content Cell | Content Cell  |
 ```
 
-| First Header  | Second Header |
-| ------------- | ------------- |
-| Content Cell  | Content Cell  |
-| Content Cell  | Content Cell  |
+| First Header | Second Header |
+|--------------|---------------|
+| Content Cell | Content Cell  |
+| Content Cell | Content Cell  |
 
 表格支持左对齐、居中、右对齐：
 
 ```md
 | Left-Aligned  | Center Aligned  | Right Aligned |
-| :------------ |:---------------:| -----:|
-| col 3 is      | some wordy text | $1600 |
-| col 2 is      | centered        |   $12 |
-| zebra stripes | are neat        |    $1 |
+|:--------------|:---------------:|--------------:|
+| col 3 is      | some wordy text |         $1600 |
+| col 2 is      |    centered     |           $12 |
+| zebra stripes |    are neat     |            $1 |
 ```
 
 | Left-Aligned  | Center Aligned  | Right Aligned |
-| :------------ |:---------------:| -----:|
-| col 3 is      | some wordy text | $1600 |
-| col 2 is      | centered        |   $12 |
-| zebra stripes | are neat        |    $1 |
+|:--------------|:---------------:|--------------:|
+| col 3 is      | some wordy text |         $1600 |
+| col 2 is      |    centered     |           $12 |
+| zebra stripes |    are neat     |            $1 |
 
 ## 水平线
 
